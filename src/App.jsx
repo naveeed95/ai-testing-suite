@@ -601,14 +601,13 @@ export default function App() {
   // FULL ENGINE — all 28 stages
   // ══════════════════════════════════════════════════════
   const runSuite = async () => {
+    if (!user) { setAuthOpen(true); return; }
     // ── Input validation ──────────────────────────────────
     const uv = validateUrl(url);
-    const kv = checkKeyFormat(apiKey);
     if (!uv.ok) { setUrlErr(uv.msg); toast("Invalid URL: " + uv.msg, "error"); return; }
-    if (!kv.ok) { setKeyErr(kv.msg); toast("API key issue: " + kv.msg, "error"); return; }
     if (uv.warn) toast(uv.warn, "warning", 6000);
 
-    _apiKey        = apiKey.trim();
+    _apiKey        = "";
     _model         = model;
     _targetKey     = targetKey.trim();
     _targetModel   = targetModel.trim() || "gpt-4o";
@@ -2124,36 +2123,19 @@ export default function App() {
             </div>
             {usage.tier==="free"&&<a href="mailto:upgrade@tythos.ai" style={{ fontSize:11, color:"#b794f4", textDecoration:"none", fontWeight:600 }}>Upgrade →</a>}
           </div>}
-          {!user&&<div style={{ marginBottom:14 }}>
-            <div className="mono" style={{ fontSize:9, letterSpacing:2, color:T.textMut, textTransform:"uppercase", marginBottom:8 }}>Grader API Key <span style={{color:T.accentFg}}>(Anthropic — used to grade responses, not the model under test)</span></div>
-            <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
-              <div style={{ flex:"1 1 280px", position:"relative" }}>
-                <input
-                  type={showKey?"text":"password"}
-                  value={apiKey}
-                  onChange={handleKeyChange}
-                  placeholder="sk-ant-api03-..."
-                  style={{ width:"100%", padding:"10px 36px 10px 14px", background:T.bgCard, border:"1px solid "+(keyErr?T.red:apiKey&&!keyErr?T.accentFg:T.border), borderRadius:8, color:T.text, fontFamily:"'Fira Code',monospace", fontSize:12, transition:"all .2s" }}
-                />
-                <button onClick={()=>setShowKey(!showKey)} style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:T.textMut, fontSize:13, lineHeight:1, padding:0 }}>
-                  {showKey?"Hide":"Show"}
-                </button>
-              </div>
-              <select
-                value={model}
-                onChange={e=>{ setModel(e.target.value); localStorage.setItem("ats_model",e.target.value); }}
-                style={{ padding:"10px 12px", background:T.bgCard, border:"1px solid "+T.border, borderRadius:8, color:T.text, fontFamily:"'Fira Code',monospace", fontSize:11, cursor:"pointer" }}
-              >
-                <option value="claude-sonnet-4-6">claude-sonnet-4-6</option>
-                <option value="claude-opus-4-7">claude-opus-4-7</option>
-                <option value="claude-haiku-4-5-20251001">claude-haiku-4-5</option>
-              </select>
-              {apiKey && !keyErr && <span style={{ fontSize:11, color:T.green }}>✓ Format OK</span>}
+          {!user&&<div style={{ marginBottom:14, padding:"16px 20px", background:dark?"rgba(124,58,237,0.08)":"rgba(124,58,237,0.06)", border:"1px solid "+(dark?"rgba(124,58,237,0.35)":"rgba(124,58,237,0.25)"), borderRadius:12, display:"flex", alignItems:"center", justifyContent:"space-between", gap:16, flexWrap:"wrap" }}>
+            <div>
+              <div style={{ fontSize:13, fontWeight:700, color:T.accentFg, marginBottom:5 }}>Create a free account to run your first evaluation</div>
+              <div style={{ fontSize:11, color:T.textSub, lineHeight:1.7 }}>No Anthropic API key needed · Tythos covers grading · 3 free runs/month</div>
             </div>
-            {keyErr
-              ? <div style={{ fontSize:10, color:T.red, marginTop:5 }}>✕ {keyErr}</div>
-              : <div style={{ fontSize:10, color:T.textMut, marginTop:5 }}>Stored in localStorage only. Never sent anywhere except directly to Anthropic's API.</div>
-            }
+            <div style={{ display:"flex", gap:8, flexShrink:0 }}>
+              <button onClick={()=>setAuthOpen(true)} style={{ padding:"9px 20px", background:"linear-gradient(135deg,#7c3aed,#0891b2)", border:"none", borderRadius:8, color:"#fff", fontFamily:"'DM Sans',sans-serif", fontSize:13, fontWeight:600, cursor:"pointer" }}>
+                Sign up free
+              </button>
+              <button onClick={()=>setAuthOpen(true)} style={{ padding:"9px 16px", background:"none", border:"1px solid "+T.border, borderRadius:8, color:T.textSub, fontFamily:"'DM Sans',sans-serif", fontSize:12, cursor:"pointer" }}>
+                Sign in
+              </button>
+            </div>
           </div>}
 
           {/* URL INPUT + TARGET CONFIG */}
@@ -2193,13 +2175,28 @@ export default function App() {
               />
             </div>
             {!targetKey && url && <div style={{ fontSize:10, color:T.amber, marginBottom:6 }}>⚠ No target API key — requests will be sent without Authorization. Add a key if your endpoint requires one.</div>}
-            <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
+            <div style={{ display:"flex", gap:10, flexWrap:"wrap", alignItems:"center" }}>
               {status !== "running" ? (
                 <>
-                  <button onClick={runSuite} disabled={!!urlErr || !!keyErr || !url.trim() || !apiKey.trim()}
-                    style={{ padding:"13px 24px", background:"linear-gradient(135deg,#7c3aed,#0891b2)", border:"none", borderRadius:10, color:"#ffffff", fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:600, cursor:(urlErr||keyErr||!url.trim()||!apiKey.trim())?"not-allowed":"pointer", transition:"all .2s", opacity:(urlErr||keyErr||!url.trim()||!apiKey.trim())?0.4:1, whiteSpace:"nowrap" }}>
-                    Launch Full Suite
-                  </button>
+                  {!user ? (
+                    <button onClick={()=>setAuthOpen(true)}
+                      style={{ padding:"13px 24px", background:"linear-gradient(135deg,#7c3aed,#0891b2)", border:"none", borderRadius:10, color:"#ffffff", fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap" }}>
+                      Sign in to Run Free
+                    </button>
+                  ) : usage.tier==="free" && usage.run_count >= 3 ? (
+                    <>
+                      <button onClick={()=>window.location.href="mailto:upgrade@tythos.ai"}
+                        style={{ padding:"13px 24px", background:"linear-gradient(135deg,#d4a017,#f97316)", border:"none", borderRadius:10, color:"#ffffff", fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap" }}>
+                        Upgrade to Pro — $49/mo
+                      </button>
+                      <span style={{ fontSize:11, color:T.amber }}>Free limit reached (3/3 runs this month)</span>
+                    </>
+                  ) : (
+                    <button onClick={runSuite} disabled={!!urlErr || !url.trim()}
+                      style={{ padding:"13px 24px", background:"linear-gradient(135deg,#7c3aed,#0891b2)", border:"none", borderRadius:10, color:"#ffffff", fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:600, cursor:(urlErr||!url.trim())?"not-allowed":"pointer", transition:"all .2s", opacity:(urlErr||!url.trim())?0.4:1, whiteSpace:"nowrap" }}>
+                      Launch Full Suite
+                    </button>
+                  )}
                   {status==="done" && (
                     <button onClick={doReset} style={{ padding:"13px 18px", background:"none", border:"1px solid "+T.border, borderRadius:10, color:T.textSub, fontFamily:"'DM Sans',sans-serif", fontSize:13, fontWeight:500, cursor:"pointer" }}>
                       Reset

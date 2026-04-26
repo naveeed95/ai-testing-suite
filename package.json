@@ -1,5 +1,5 @@
 {
-  "name": "ai-testing-suite",
+  "name": "tythos",
   "version": "5.0.0",
   "description": "Tythos — The world's first complete AI evaluation platform — 34 stages, 7 phases, Claude-powered grading",
   "private": true,
@@ -37,6 +37,6 @@
     "claude",
     "anthropic"
   ],
-  "author": "AI Testing Suite",
+  "author": "Tythos",
   "license": "MIT"
 }
