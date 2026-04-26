@@ -381,7 +381,7 @@ function Ring({ score, color, size }) {
         strokeDasharray={fill + " " + (circ - fill)} strokeLinecap="round"
         transform={"rotate(-90 " + cx + " " + cy + ")"} />
       <text x={cx} y={cy+1} textAnchor="middle" dominantBaseline="central"
-        fill={color} fontFamily="'Fira Code',monospace" fontWeight="700" fontSize={Math.round(sz * 0.22)}>
+        fill={color} fontFamily="'JetBrains Mono',monospace" fontWeight="700" fontSize={Math.round(sz * 0.22)}>
         {score || 0}
       </text>
     </svg>
@@ -398,7 +398,7 @@ function GuideCard({ meta, dark }) {
   const muted= dark ? "rgba(255,255,255,0.45)" : "#52525b";
   return (
     <div style={{ background: bg, border: "1px solid " + bd, borderRadius: 10, padding: "14px 16px", marginTop: 12 }}>
-      <div style={{ fontSize: 10, fontFamily: "'Fira Code',monospace", letterSpacing: 2, textTransform: "uppercase", color: meta.accent, marginBottom: 10, opacity: 0.8 }}>Beginner Guide</div>
+      <div style={{ fontSize: 10, fontFamily: "'JetBrains Mono',monospace", letterSpacing: 2, textTransform: "uppercase", color: meta.accent, marginBottom: 10, opacity: 0.8 }}>Beginner Guide</div>
       {[["What it tests", meta.what, meta.accent], ["Why it matters", meta.why, dark ? "#fbbf24" : "#92400e"], ["How it works", meta.how, dark ? "#a78bfa" : "#6d28d9"]].map(([lbl, txt, c]) => (
         <div key={lbl} style={{ marginBottom: 8, fontSize: 12, lineHeight: 1.65, color: muted }}>
           <span style={{ fontWeight: 600, color: c }}>{lbl}: </span>{txt}
@@ -418,7 +418,7 @@ function ProgressBar({ label, val, color, note, dark }) {
     <div style={{ marginBottom: 10 }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
         <span style={{ fontSize: 12, color: muted }}>{label}</span>
-        <span style={{ fontSize: 12, fontFamily: "'Fira Code',monospace", fontWeight: 600, color }}>{v}%</span>
+        <span style={{ fontSize: 12, fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, color }}>{v}%</span>
       </div>
       <div style={{ height: 5, background: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)", borderRadius: 3 }}>
         <div style={{ width: v + "%", height: "100%", background: color, borderRadius: 3, transition: "width 1.1s ease" }} />
@@ -437,8 +437,8 @@ function MetricCard({ label, value, color, note, dark }) {
   const muted= dark ? "rgba(255,255,255,0.4)"  : "#71717a";
   return (
     <div style={{ background: bg, border: "1px solid " + bd, borderRadius: 8, padding: "12px 14px" }}>
-      <div style={{ fontSize: 11, color: muted, marginBottom: 4, fontFamily: "'Fira Code',monospace", letterSpacing: 0.5 }}>{label}</div>
-      <div style={{ fontSize: 20, fontWeight: 700, fontFamily: "'Fira Code',monospace", color, lineHeight: 1.1 }}>{value}</div>
+      <div style={{ fontSize: 11, color: muted, marginBottom: 4, fontFamily: "'JetBrains Mono',monospace", letterSpacing: 0.5 }}>{label}</div>
+      <div style={{ fontSize: 20, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace", color, lineHeight: 1.1 }}>{value}</div>
       {note && <div style={{ fontSize: 10, color: muted, marginTop: 4, lineHeight: 1.4 }}>{note}</div>}
     </div>
   );
@@ -475,380 +475,497 @@ function Toasts({ toasts, remove }) {
 }
 
 // ══════════════════════════════════════════════════════════
-// LANDING PAGE — next-gen UI with motion design
+// LANDING — shared palette + hooks
 // ══════════════════════════════════════════════════════════
-function LandingPage({ T, dark, setAuthOpen }) {
-  const [revealed, setRevealed] = useState({});
-  const [counts, setCounts]     = useState({ stages:0, phases:0, probes:0 });
-  const revealRefs = useRef({});
-  const counted    = useRef(false);
+const mkLP = d => ({
+  dark:d,
+  bg:  d?"#08081a":"#f4f4fc",
+  surf:d?"rgba(255,255,255,0.05)":"#ffffff",
+  bd:  d?"rgba(255,255,255,0.1)":"#e2e2f0",
+  txt: d?"#f0f0ff":"#0a0a1a",
+  sub: d?"rgba(210,215,255,0.78)":"#44447a",
+  mut: d?"rgba(170,175,220,0.42)":"#8888aa",
+  v:   "#8b5cf6",
+  vl:  d?"#c4b5fd":"#7c3aed",
+  cy:  "#06b6d4",
+  au:  "#f59e0b",
+  gr:  "#10b981",
+  re:  "#ef4444",
+});
 
-  useEffect(() => {
-    const animateTo = (target, key, dur) => {
-      const t0 = Date.now();
-      const tick = () => {
-        const p = Math.min((Date.now()-t0)/dur, 1);
-        const e = 1-(1-p)*(1-p)*(1-p);
-        setCounts(c=>({...c,[key]:Math.round(target*e)}));
-        if(p<1) requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-    };
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(en => {
-        if(en.isIntersecting && en.target.dataset.rid) {
-          const id = en.target.dataset.rid;
-          setRevealed(r=>({...r,[id]:true}));
-          if(id==="metrics" && !counted.current) {
-            counted.current = true;
-            animateTo(33,"stages",1400);
-            animateTo(7,"phases",1200);
-            animateTo(100,"probes",1800);
-          }
-        }
-      });
-    }, {threshold:0.12});
-    Object.values(revealRefs.current).forEach(el=>el&&obs.observe(el));
-    return ()=>obs.disconnect();
-  }, []);
-
-  const rref = id => el => { if(el){el.dataset.rid=id; revealRefs.current[id]=el;} };
-  const rv   = id => revealed[id];
-  const fu   = (id, delay=0) => ({
-    opacity: rv(id)?1:0,
-    transform: rv(id)?"translateY(0)":"translateY(36px)",
-    transition: `opacity 0.75s ${delay}s cubic-bezier(0.16,1,0.3,1), transform 0.75s ${delay}s cubic-bezier(0.16,1,0.3,1)`,
+function useRv() {
+  const [rv,setRv] = useState({});
+  const els = useRef({});
+  useEffect(()=>{
+    const obs = new IntersectionObserver(es=>es.forEach(e=>{
+      if(e.isIntersecting&&e.target.dataset.rid) setRv(r=>({...r,[e.target.dataset.rid]:true}));
+    }),{threshold:.12});
+    Object.values(els.current).forEach(el=>el&&obs.observe(el));
+    return()=>obs.disconnect();
+  },[]);
+  const r=id=>el=>{if(el){el.dataset.rid=id;els.current[id]=el;}};
+  const fu=(id,d=0)=>({
+    opacity:rv[id]?1:0,transform:rv[id]?"translateY(0)":"translateY(28px)",
+    transition:`opacity .65s ${d}s cubic-bezier(.16,1,.3,1),transform .65s ${d}s cubic-bezier(.16,1,.3,1)`,
   });
+  return {r,fu,rv};
+}
 
-  const bg    = dark?"#050510":"#f4f4fc";
-  const surf  = dark?"rgba(255,255,255,0.025)":"#ffffff";
-  const bd    = dark?"rgba(255,255,255,0.08)":"#e2e2f0";
-  const muted = dark?"rgba(200,200,255,0.5)":"#5a5a80";
-  const txt   = dark?"#ececff":"#0a0a1a";
-  const stars = [[8,18,"1.5px","4s","0s"],[22,52,"1px","3s","1s"],[45,15,"2px","5s","0.5s"],[68,62,"1px","3.5s","2s"],[15,78,"1.5px","4.5s","1.5s"],[80,32,"1px","3s","0.8s"],[55,88,"2px","4s","2.5s"],[92,10,"1px","3.5s","0.3s"],[35,42,"1.5px","5s","1.2s"],[75,70,"1px","4s","1.8s"],[5,35,"1px","3.5s","2.2s"],[60,85,"2px","4.5s","0.7s"],[28,8,"1px","3s","0.4s"],[50,25,"1.5px","4s","1.6s"],[90,55,"1px","3.5s","0.9s"],[12,60,"1px","3s","2s"],[72,20,"2px","4.5s","0.6s"],[38,95,"1px","3s","1.4s"]];
+const PHASE_DETAIL={
+  core:["MMLU 20-domain knowledge test","TruthfulQA mythbusting","JailbreakBench 15 attack patterns","BBQ bias benchmark","P50/P95/P99 latency profiling","5-run semantic consistency check"],
+  p1:  ["NLI entailment scoring","ECE calibration + Brier score","CoT counterfactual faithfulness","Needle-in-a-haystack recall (15 turns)"],
+  p2:  ["TAP algorithm red-team","Homoglyph/cipher encoding attacks","Delayed injection (plant turn 1, fire turn 10)","Cross-modal OCR attack simulation"],
+  p3:  ["GPQA PhD-level science questions","BIG-Bench Hard challenging tasks","Bootstrap p-values + Cohen's d","6-model Elo leaderboard ranking"],
+  p4:  ["CUSUM statistical drift detection","PSI distributional shift","9-label implicit toxicity classifier","Minimal counterfactual edit (root cause)"],
+  p5:  ["Pass@1/Pass@10 code evaluation","RAGAS faithfulness/precision/recall","Goal hijacking resistance test","5-language safety parity check"],
+  p6:  ["Persistence sycophancy (3× repeat)","IFEval multi-constraint scoring","Over-refusal corpus (20 legitimate requests)","JSON schema strict field validation"],
+};
+
+const BENCHMARKS=[
+  {name:"MMLU",domain:"Knowledge",desc:"20-domain factual accuracy sample"},
+  {name:"TruthfulQA",domain:"Truthfulness",desc:"Myth and misconception resistance"},
+  {name:"GSM8K",domain:"Math",desc:"Multi-step word problem solving"},
+  {name:"BBQ",domain:"Fairness",desc:"Social stereotype and bias detection"},
+  {name:"JailbreakBench",domain:"Safety",desc:"15 adversarial attack vectors"},
+  {name:"IFEval",domain:"Instruction",desc:"Multi-constraint following accuracy"},
+  {name:"BIG-Bench Hard",domain:"Reasoning",desc:"Tasks that challenge frontier models"},
+  {name:"RAGAS",domain:"RAG",desc:"Faithfulness, precision, recall metrics"},
+];
+
+// ══════════════════════════════════════════════════════════
+// HOME
+// ══════════════════════════════════════════════════════════
+function LandingHome({lp,setAuthOpen}) {
+  const {r,fu,rv}=useRv();
+  const [cnt,setCnt]=useState({s:0,p:0,pr:0});
+  const done=useRef(false);
+  useEffect(()=>{
+    if(rv.metrics&&!done.current){
+      done.current=true;
+      const go=(target,key,dur)=>{
+        const t0=Date.now();
+        const tick=()=>{const p=Math.min((Date.now()-t0)/dur,1),e=1-(1-p)**3;setCnt(c=>({...c,[key]:Math.round(target*e)}));if(p<1)requestAnimationFrame(tick);};
+        requestAnimationFrame(tick);
+      };
+      go(33,"s",1400);go(7,"p",1200);go(100,"pr",1800);
+    }
+  },[rv.metrics]);
+
+  const stars=[[8,18,"1.5px","4s","0s"],[22,52,"1px","3s","1s"],[45,15,"2px","5s",".5s"],[68,62,"1px","3.5s","2s"],[15,78,"1.5px","4.5s","1.5s"],[80,32,"1px","3s",".8s"],[55,88,"2px","4s","2.5s"],[92,10,"1px","3.5s",".3s"],[35,42,"1.5px","5s","1.2s"],[75,70,"1px","4s","1.8s"],[5,35,"1px","3.5s","2.2s"],[60,85,"2px","4.5s",".7s"],[28,8,"1px","3s",".4s"],[50,25,"1.5px","4s","1.6s"],[90,55,"1px","3.5s",".9s"]];
+  const B = (text,onClick,style={})=><button onClick={onClick} style={{padding:"16px 40px",background:"linear-gradient(135deg,#8b5cf6,#06b6d4)",border:"none",borderRadius:12,color:"#fff",fontFamily:"'Inter',sans-serif",fontSize:16,fontWeight:700,cursor:"pointer",boxShadow:"0 0 48px rgba(139,92,246,0.5)",transition:"all .3s ease",...style}}>{text}</button>;
+
+  return(<div>
+    {/* ── Hero ── */}
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"80px 24px 100px",position:"relative"}}>
+      <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#8b5cf6,#06b6d4,transparent)",animation:"sweepLine 4s linear infinite"}}/>
+      {lp.dark&&<div style={{position:"absolute",left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,rgba(139,92,246,0.25),transparent)",animation:"scanDown 8s linear infinite",pointerEvents:"none"}}/>}
+      {lp.dark&&stars.map(([l,t,sz,d,dl],i)=><div key={i} style={{position:"absolute",left:l+"%",top:t+"%",width:sz,height:sz,borderRadius:"50%",background:"#fff",animation:`starPulse ${d} ease-in-out infinite ${dl}`,pointerEvents:"none"}}/>)}
+      <div ref={r("hero")} style={{maxWidth:840,textAlign:"center",position:"relative",zIndex:1}}>
+        <div style={{display:"inline-flex",alignItems:"center",gap:8,background:lp.dark?"rgba(139,92,246,0.12)":"rgba(139,92,246,0.08)",border:"1px solid rgba(139,92,246,0.35)",borderRadius:100,padding:"7px 18px",marginBottom:32,...fu("hero")}}>
+          <div style={{width:6,height:6,borderRadius:"50%",background:"#8b5cf6",animation:"pulse 2s ease-in-out infinite"}}/>
+          <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,letterSpacing:2.5,color:lp.vl,fontWeight:600}}>AI EVALUATION PLATFORM · FREE TO START</span>
+        </div>
+        <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(44px,7.5vw,84px)",fontWeight:800,letterSpacing:-3,color:lp.txt,lineHeight:.97,marginBottom:26,...fu("hero",.08)}}>
+          Know exactly<br/><span style={{background:"linear-gradient(135deg,#c4b5fd 0%,#06b6d4 50%,#f59e0b 100%)",backgroundSize:"200% 200%",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",animation:"shimmerText 5s ease infinite"}}>how good your AI is</span>
+        </h1>
+        <p style={{fontSize:18,color:lp.sub,lineHeight:1.85,maxWidth:560,margin:"0 auto 44px",fontWeight:400,...fu("hero",.16)}}>
+          Paste any AI endpoint URL. Run <strong style={{color:lp.txt,fontWeight:700}}>33 automated test stages</strong> across 7 phases. Get a scored safety report — no expertise required.
+        </p>
+        <div style={{display:"flex",gap:14,justifyContent:"center",flexWrap:"wrap",marginBottom:64,...fu("hero",.24)}}>
+          {B("Start for free — no card needed",()=>setAuthOpen(true))}
+          <button onClick={()=>setAuthOpen(true)} style={{padding:"16px 28px",background:"none",border:`1px solid ${lp.bd}`,borderRadius:12,color:lp.sub,fontFamily:"'Inter',sans-serif",fontSize:15,fontWeight:500,cursor:"pointer",transition:"all .3s ease"}}>Sign in</button>
+        </div>
+        <div style={{display:"flex",justifyContent:"center",flexWrap:"wrap",...fu("hero",.32)}}>
+          {[["33","Test stages"],["7","Eval phases"],["3","Free runs/mo"],["0","API keys needed"]].map(([n,l],i,a)=>(
+            <div key={l} style={{textAlign:"center",padding:"0 32px",borderRight:i<a.length-1?`1px solid ${lp.bd}`:"none"}}>
+              <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:34,fontWeight:800,color:lp.vl,lineHeight:1}}>{n}</div>
+              <div style={{fontSize:11,color:lp.mut,marginTop:7,letterSpacing:.3}}>{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{position:"absolute",bottom:36,left:"50%",transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:8,opacity:.3}}>
+        <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:8,letterSpacing:4,color:lp.mut,textTransform:"uppercase"}}>scroll</span>
+        <div style={{width:1,height:44,background:`linear-gradient(to bottom,${lp.bd},transparent)`}}/>
+      </div>
+    </div>
+
+    {/* ── Problem bar ── */}
+    <div style={{borderTop:`1px solid ${lp.bd}`,borderBottom:`1px solid ${lp.bd}`,background:lp.dark?"rgba(255,255,255,0.015)":"rgba(0,0,0,0.02)",padding:"36px 24px"}}>
+      <div style={{maxWidth:1000,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"center",gap:40,flexWrap:"wrap"}}>
+        {[["⚠","Silent failures","AI fails confidently — users trust wrong answers"],["🔁","No standard","Every team reinvents evaluation from scratch"],["🚀","Deploy blind","Most teams ship AI without safety testing"]].map(([ic,t,s])=>(
+          <div key={t} style={{display:"flex",alignItems:"center",gap:14,minWidth:230}}>
+            <div style={{width:40,height:40,borderRadius:12,background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{ic}</div>
+            <div><div style={{fontSize:13,fontWeight:600,color:lp.txt,marginBottom:2}}>{t}</div><div style={{fontSize:11,color:lp.sub}}>{s}</div></div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* ── How it works ── */}
+    <div ref={r("how")} style={{maxWidth:1100,margin:"0 auto",padding:"96px 24px"}}>
+      <div style={{textAlign:"center",marginBottom:60,...fu("how")}}>
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,letterSpacing:3,color:lp.vl,textTransform:"uppercase",marginBottom:14}}>How it works</div>
+        <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(28px,4vw,52px)",fontWeight:800,color:lp.txt,letterSpacing:-1.5,marginBottom:14}}>From endpoint to insight<br/>in minutes</h2>
+        <p style={{fontSize:14,color:lp.sub,maxWidth:400,margin:"0 auto"}}>Three steps. No setup. No expertise required.</p>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:24}}>
+        {[{n:"01",icon:"🔗",t:"Paste your endpoint",d:"Any AI API URL — OpenAI, Anthropic, Azure, or your own. No config needed.",c:"#8b5cf6"},{n:"02",icon:"⚡",t:"Run 33 test stages",d:"Hundreds of crafted prompts across 7 phases. Every known AI failure mode tested automatically.",c:"#06b6d4"},{n:"03",icon:"📊",t:"Get your scored report",d:"Per-stage scores, AI-written executive summary, and a certification badge — ready in minutes.",c:"#f59e0b"}].map((s,i)=>(
+          <div key={s.n} className="lp-card" style={{background:lp.surf,border:`1px solid ${lp.bd}`,borderRadius:18,padding:"34px 28px",position:"relative",overflow:"hidden",...fu("how",i*.15)}}>
+            <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:s.c}}/>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
+              <div style={{width:48,height:48,borderRadius:14,background:s.c+"18",border:`1px solid ${s.c}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>{s.icon}</div>
+              <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:12,fontWeight:700,color:s.c,letterSpacing:1}}>{s.n}</span>
+            </div>
+            <h3 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:17,fontWeight:700,color:lp.txt,marginBottom:10,letterSpacing:-.3}}>{s.t}</h3>
+            <p style={{fontSize:13,color:lp.sub,lineHeight:1.8}}>{s.d}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* ── Metrics ── */}
+    <div style={{background:lp.dark?"rgba(139,92,246,0.04)":"rgba(139,92,246,0.03)",borderTop:`1px solid ${lp.bd}`,borderBottom:`1px solid ${lp.bd}`,padding:"88px 24px"}}>
+      <div ref={r("metrics")} style={{maxWidth:1000,margin:"0 auto"}}>
+        <div style={{textAlign:"center",marginBottom:56,...fu("metrics")}}>
+          <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(26px,3.5vw,48px)",fontWeight:800,color:lp.txt,letterSpacing:-1.5,marginBottom:12}}>Built on real benchmarks</h2>
+          <p style={{fontSize:14,color:lp.sub}}>Published academic benchmarks and adversarial security research — not proprietary scores.</p>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:18}}>
+          {[{v:cnt.s,l:"Test stages",s:"Every AI failure mode",c:lp.vl},{v:cnt.p,l:"Eval phases",s:"Core to behavioral",c:"#06b6d4"},{v:cnt.pr,sf:"+",l:"Probes per run",s:"Crafted test prompts",c:"#f59e0b"},{v:"~$0.90",l:"Cost per run",s:"Tythos covers it free",c:"#10b981",str:true},{v:"AI",l:"Graded by",s:"Claude Sonnet 4",c:"#f472b6",str:true}].map(m=>(
+            <div key={m.l} className="lp-card" style={{background:lp.surf,border:`1px solid ${lp.bd}`,borderRadius:16,padding:"26px 20px",textAlign:"center",...fu("metrics",.1)}}>
+              <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:40,fontWeight:800,color:m.c,lineHeight:1,marginBottom:8}}>{m.str?m.v:m.v}{m.sf||""}</div>
+              <div style={{fontSize:13,fontWeight:600,color:lp.txt,marginBottom:4}}>{m.l}</div>
+              <div style={{fontSize:11,color:lp.mut}}>{m.s}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    {/* ── Phase grid ── */}
+    <div ref={r("phases")} style={{maxWidth:1240,margin:"0 auto",padding:"96px 24px"}}>
+      <div style={{textAlign:"center",marginBottom:56,...fu("phases")}}>
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,letterSpacing:3,color:"#06b6d4",textTransform:"uppercase",marginBottom:14}}>7 Evaluation Phases</div>
+        <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(28px,4vw,52px)",fontWeight:800,color:lp.txt,letterSpacing:-1.5,marginBottom:14}}>Everything covered.<br/>Nothing assumed.</h2>
+        <p style={{fontSize:14,color:lp.sub,maxWidth:500,margin:"0 auto"}}>33 stages probe every known AI failure mode — from hallucination to adversarial attacks.</p>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(310px,1fr))",gap:16}}>
+        {PHASES.map((ph,i)=>(
+          <div key={ph.id} className="lp-card" style={{background:lp.surf,border:`1px solid ${lp.bd}`,borderRadius:18,padding:"24px 22px",position:"relative",overflow:"hidden",...fu("phases",i*.07)}}
+            onMouseEnter={e=>{e.currentTarget.style.borderColor=ph.color+"55";e.currentTarget.style.boxShadow=`0 16px 48px ${ph.color}18`;}}
+            onMouseLeave={e=>{e.currentTarget.style.borderColor=lp.bd;e.currentTarget.style.boxShadow="none";}}>
+            <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${ph.color},${ph.color}55)`}}/>
+            <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:14}}>
+              <div><div style={{fontSize:12,fontWeight:700,color:ph.color,letterSpacing:.8,marginBottom:4}}>{ph.label.toUpperCase()}</div><div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,color:ph.color+"70"}}>{ph.stages.length} stages</div></div>
+              <div style={{background:ph.color+"15",border:`1px solid ${ph.color}30`,borderRadius:8,padding:"4px 10px",fontFamily:"'JetBrains Mono',monospace",fontSize:10,color:ph.color}}>Phase {i+1}</div>
+            </div>
+            <p style={{fontSize:12,color:lp.sub,lineHeight:1.8,marginBottom:14}}>{ph.desc}</p>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+              {ph.stages.map(s=><div key={s} style={{display:"flex",alignItems:"center",gap:5,background:lp.dark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.04)",border:`1px solid ${lp.bd}`,borderRadius:7,padding:"3px 9px"}}><span style={{fontSize:12}}>{STAGE_META[s]?.icon}</span><span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,color:lp.mut}}>{STAGE_META[s]?.name}</span></div>)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* ── Terminal mockup ── */}
+    <div style={{background:lp.dark?"rgba(0,0,0,0.25)":"rgba(0,0,0,0.02)",borderTop:`1px solid ${lp.bd}`,borderBottom:`1px solid ${lp.bd}`,padding:"96px 24px"}}>
+      <div ref={r("out")} style={{maxWidth:1060,margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(320px,1fr))",gap:56,alignItems:"center"}}>
+        <div style={{...fu("out")}}>
+          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,letterSpacing:3,color:"#f59e0b",textTransform:"uppercase",marginBottom:18}}>What you get</div>
+          <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(26px,3.5vw,46px)",fontWeight:800,color:lp.txt,letterSpacing:-1,marginBottom:28}}>A report that<br/>tells you the truth</h2>
+          {[{ic:"🎯",t:"Overall score /100",d:"Single number with risk classification — Low, Medium, or High Risk."},{ic:"📋",t:"Per-stage breakdowns",d:"Every stage has a score, verdict, and beginner-friendly explanation."},{ic:"📝",t:"AI executive summary",d:"Claude writes a full report with findings, risks, and recommendations."},{ic:"🏆",t:"Certification badge",d:"Gold/Silver/Bronze — shareable PDF certificate with your score."}].map(x=>(
+            <div key={x.t} style={{display:"flex",gap:16,alignItems:"flex-start",marginBottom:20}}>
+              <div style={{width:44,height:44,borderRadius:12,background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.25)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{x.ic}</div>
+              <div><div style={{fontSize:14,fontWeight:600,color:lp.txt,marginBottom:4}}>{x.t}</div><div style={{fontSize:12,color:lp.sub,lineHeight:1.75}}>{x.d}</div></div>
+            </div>
+          ))}
+        </div>
+        <div style={{...fu("out",.2)}}>
+          <div style={{background:lp.dark?"#03030c":"#f0f0fa",border:`1px solid ${lp.bd}`,borderRadius:18,overflow:"hidden",boxShadow:lp.dark?"0 32px 80px rgba(0,0,0,0.6)":"0 24px 60px rgba(0,0,0,0.08)",fontFamily:"'JetBrains Mono',monospace",fontSize:11}}>
+            <div style={{background:lp.dark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.04)",padding:"12px 16px",display:"flex",alignItems:"center",gap:8,borderBottom:`1px solid ${lp.bd}`}}>
+              {["#ff5f56","#ffbd2e","#27c93f"].map(c=><div key={c} style={{width:11,height:11,borderRadius:"50%",background:c}}/>)}
+              <span style={{fontSize:10,color:lp.mut,marginLeft:8,letterSpacing:1}}>tythos — evaluation report</span>
+            </div>
+            <div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:5}}>
+              {[{c:lp.dark?"#555577":"#9ca3af",t:"Tythos AI Evaluation v5.0 — 33 stages"},{c:"#06b6d4",t:"[ PHASE 1 ] Core Intelligence"},{c:"#10b981",t:"  ✓ connectivity    97/100"},{c:"#10b981",t:"  ✓ functional      91/100"},{c:"#ef4444",t:"  ✗ hallucination   48/100  ← CRITICAL"},{c:"#10b981",t:"  ✓ safety          89/100"},{c:"#f59e0b",t:"  ⚠ bias            62/100"},{c:"#8b5cf6",t:"[ PHASE 2 ] Deep Evaluation"},{c:"#10b981",t:"  ✓ semantic         85/100"},{c:"#f59e0b",t:"─────────────────────────────────"},{c:"#f59e0b",t:"OVERALL SCORE:  72 / 100"},{c:"#fbbf24",t:"RISK LEVEL:     Medium Risk"},{c:"#f59e0b",t:"CERTIFICATION:  Silver · 22/33 passed"}].map((l,i)=><div key={i} style={{color:l.c,lineHeight:1.6}}>{l.t}</div>)}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* ── Final CTA ── */}
+    <div ref={r("cta")} style={{background:lp.dark?"linear-gradient(135deg,rgba(139,92,246,0.12),rgba(6,182,212,0.08))":"linear-gradient(135deg,rgba(139,92,246,0.06),rgba(6,182,212,0.04))",borderTop:`1px solid ${lp.bd}`,padding:"110px 24px",position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",inset:0,background:lp.dark?"radial-gradient(ellipse at 50% 0%,rgba(139,92,246,0.2),transparent 65%)":"none",pointerEvents:"none"}}/>
+      <div style={{maxWidth:600,margin:"0 auto",textAlign:"center",...fu("cta")}}>
+        <div style={{fontSize:48,marginBottom:24,animation:"floatY 3.5s ease-in-out infinite",display:"inline-block"}}>⚡</div>
+        <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(32px,5vw,60px)",fontWeight:800,color:lp.txt,letterSpacing:-2,marginBottom:18}}>Your AI deserves<br/><span style={{background:"linear-gradient(135deg,#c4b5fd,#06b6d4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>an honest evaluation</span></h2>
+        <p style={{fontSize:16,color:lp.sub,marginBottom:40,lineHeight:1.85,maxWidth:460,margin:"0 auto 40px"}}>Join the teams using Tythos to ship AI they can trust. Free account. 3 runs every month.</p>
+        {B("Start your free evaluation →",()=>setAuthOpen(true),{padding:"18px 52px",fontSize:18,borderRadius:14,boxShadow:"0 0 64px rgba(139,92,246,0.55)"})}
+        <div style={{marginTop:18,fontSize:12,color:lp.mut}}>Free · 3 runs/month · No credit card</div>
+      </div>
+    </div>
+  </div>);
+}
+
+// ══════════════════════════════════════════════════════════
+// FEATURES
+// ══════════════════════════════════════════════════════════
+function LandingFeatures({lp,setAuthOpen}) {
+  const {r,fu}=useRv();
+  return(<div>
+    <div style={{padding:"88px 24px 72px",textAlign:"center",borderBottom:`1px solid ${lp.bd}`,position:"relative"}}>
+      <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#8b5cf6,#06b6d4,transparent)",animation:"sweepLine 4s linear infinite"}}/>
+      <div ref={r("h")} style={{maxWidth:700,margin:"0 auto",...fu("h")}}>
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,letterSpacing:3,color:lp.vl,textTransform:"uppercase",marginBottom:20}}>Features</div>
+        <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(36px,6vw,68px)",fontWeight:800,letterSpacing:-2.5,color:lp.txt,lineHeight:1.02,marginBottom:22}}>33 test stages.<br/><span style={{background:"linear-gradient(135deg,#c4b5fd,#06b6d4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Zero guesswork.</span></h1>
+        <p style={{fontSize:17,color:lp.sub,lineHeight:1.85,maxWidth:520,margin:"0 auto 36px"}}>Every stage is grounded in published academic benchmarks — not proprietary scoring.</p>
+        <button onClick={()=>setAuthOpen(true)} style={{padding:"14px 36px",background:"linear-gradient(135deg,#8b5cf6,#06b6d4)",border:"none",borderRadius:10,color:"#fff",fontFamily:"'Inter',sans-serif",fontSize:15,fontWeight:700,cursor:"pointer",boxShadow:"0 0 40px rgba(139,92,246,0.4)"}}>Start free evaluation</button>
+      </div>
+    </div>
+
+    <div ref={r("ph")} style={{maxWidth:1240,margin:"0 auto",padding:"80px 24px"}}>
+      <div style={{textAlign:"center",marginBottom:52,...fu("ph")}}>
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,letterSpacing:3,color:"#06b6d4",textTransform:"uppercase",marginBottom:14}}>The 7 phases</div>
+        <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(26px,3.5vw,44px)",fontWeight:800,color:lp.txt,letterSpacing:-1.5}}>Depth at every layer</h2>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(340px,1fr))",gap:20}}>
+        {PHASES.map((ph,i)=>(
+          <div key={ph.id} className="lp-card" style={{background:lp.surf,border:`1px solid ${lp.bd}`,borderRadius:18,padding:"26px 24px",position:"relative",overflow:"hidden",...fu("ph",i*.06)}}
+            onMouseEnter={e=>{e.currentTarget.style.borderColor=ph.color+"55";}} onMouseLeave={e=>{e.currentTarget.style.borderColor=lp.bd;}}>
+            <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:ph.color}}/>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+              <div style={{background:ph.color+"18",border:`1px solid ${ph.color}30`,borderRadius:10,padding:"6px 12px",fontSize:11,fontWeight:700,color:ph.color,letterSpacing:.8}}>{ph.label.toUpperCase()}</div>
+              <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,color:ph.color+"70"}}>{ph.stages.length} stages</span>
+            </div>
+            <p style={{fontSize:12,color:lp.sub,lineHeight:1.8,marginBottom:14}}>{ph.desc}</p>
+            {(PHASE_DETAIL[ph.id]||[]).map(d=><div key={d} style={{display:"flex",alignItems:"center",gap:8,fontSize:12,color:lp.sub,marginBottom:6}}><span style={{color:ph.color,fontWeight:700,flexShrink:0}}>→</span>{d}</div>)}
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div style={{background:lp.dark?"rgba(0,0,0,0.25)":"rgba(0,0,0,0.02)",borderTop:`1px solid ${lp.bd}`,borderBottom:`1px solid ${lp.bd}`,padding:"80px 24px"}}>
+      <div ref={r("bm")} style={{maxWidth:1000,margin:"0 auto"}}>
+        <div style={{textAlign:"center",marginBottom:48,...fu("bm")}}>
+          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,letterSpacing:3,color:"#f59e0b",textTransform:"uppercase",marginBottom:14}}>Real benchmarks</div>
+          <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(24px,3.5vw,44px)",fontWeight:800,color:lp.txt,letterSpacing:-1.5,marginBottom:12}}>Academic-grade evaluation</h2>
+          <p style={{fontSize:14,color:lp.sub,maxWidth:480,margin:"0 auto"}}>The same benchmarks top AI labs use — not proprietary "AI safety scores."</p>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:14}}>
+          {BENCHMARKS.map((b,i)=>(
+            <div key={b.name} className="lp-card" style={{background:lp.surf,border:`1px solid ${lp.bd}`,borderRadius:14,padding:"20px 18px",...fu("bm",i*.06)}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                <span style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:16,fontWeight:800,color:lp.txt}}>{b.name}</span>
+                <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:9,color:lp.vl,background:"rgba(139,92,246,0.12)",border:"1px solid rgba(139,92,246,0.2)",borderRadius:6,padding:"2px 7px"}}>{b.domain}</span>
+              </div>
+              <div style={{fontSize:12,color:lp.sub,lineHeight:1.7}}>{b.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <div style={{padding:"80px 24px",textAlign:"center"}}>
+      <div ref={r("c")} style={{maxWidth:500,margin:"0 auto",...fu("c")}}>
+        <h3 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:28,fontWeight:800,color:lp.txt,letterSpacing:-.8,marginBottom:14}}>Ready to run your first evaluation?</h3>
+        <p style={{fontSize:13,color:lp.sub,marginBottom:28,lineHeight:1.75}}>Free account. 3 runs/month. No API key needed.</p>
+        <button onClick={()=>setAuthOpen(true)} style={{padding:"15px 40px",background:"linear-gradient(135deg,#8b5cf6,#06b6d4)",border:"none",borderRadius:12,color:"#fff",fontFamily:"'Inter',sans-serif",fontSize:15,fontWeight:700,cursor:"pointer",boxShadow:"0 0 48px rgba(139,92,246,0.4)"}}>Start for free →</button>
+      </div>
+    </div>
+  </div>);
+}
+
+// ══════════════════════════════════════════════════════════
+// PRICING
+// ══════════════════════════════════════════════════════════
+function LandingPricing({lp,setAuthOpen}) {
+  const {r,fu}=useRv();
+  const [open,setOpen]=useState(null);
+  const FAQS=[
+    {q:"What counts as one run?",a:"One run = one full evaluation suite: all 33 stages across 7 phases against your endpoint. Each run costs Tythos approximately $0.90 in API costs — we cover this free up to 3 times per month."},
+    {q:"Do free runs expire?",a:"Free runs reset on the 1st of each month. Unused runs don't carry over. Pro subscribers get unlimited runs that never expire."},
+    {q:"Can I test any AI endpoint?",a:"Yes — any endpoint that accepts HTTP POST in OpenAI or Anthropic message format. This includes ChatGPT, Claude, Gemini, Llama, Mistral, and any custom-built endpoints."},
+    {q:"What's in the Certified Report?",a:"A co-branded PDF with full evaluation results, signed certification level (Gold/Silver/Bronze), and an official Tythos badge. API cost is ~$0.90 — over 99% margin."},
+    {q:"Is my target API key safe?",a:"Your target API key goes directly from your browser to your endpoint — it never touches Tythos servers. Only grading requests pass through our backend."},
+  ];
+  return(<div>
+    <div style={{padding:"88px 24px 72px",textAlign:"center",borderBottom:`1px solid ${lp.bd}`,position:"relative"}}>
+      <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#10b981,#06b6d4,transparent)",animation:"sweepLine 4s linear infinite"}}/>
+      <div ref={r("h")} style={{maxWidth:640,margin:"0 auto",...fu("h")}}>
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,letterSpacing:3,color:"#10b981",textTransform:"uppercase",marginBottom:20}}>Pricing</div>
+        <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(36px,6vw,68px)",fontWeight:800,letterSpacing:-2.5,color:lp.txt,lineHeight:1,marginBottom:22}}>Start free.<br/><span style={{background:"linear-gradient(135deg,#10b981,#06b6d4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Scale when ready.</span></h1>
+        <p style={{fontSize:17,color:lp.sub,lineHeight:1.85}}>No credit card required. First 3 runs on us — every month. Forever.</p>
+      </div>
+    </div>
+
+    <div ref={r("pl")} style={{maxWidth:1000,margin:"0 auto",padding:"80px 24px"}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(270px,1fr))",gap:20}}>
+        {[
+          {tier:"Free",price:"$0",sub:"/month",badge:null,color:"#8b5cf6",hi:false,note:"No credit card needed",features:["3 evaluation runs/month","All 33 test stages","AI-graded full report","PDF certificate export","Certification badge"],cta:"Get started free"},
+          {tier:"Pro",price:"$49",sub:"/month",badge:"MOST POPULAR",color:"#06b6d4",hi:true,note:"Cancel any time",features:["Unlimited evaluation runs","Everything in Free","Full run history","Priority grading queue","Shareable report links"],cta:"Upgrade to Pro"},
+          {tier:"Certified Report",price:"$299",sub:"one-time",badge:null,color:"#f59e0b",hi:false,note:"One-time, no subscription",features:["Co-branded PDF certificate","Official certification level","Shareable public badge","~$0.90 total API cost","99.7% margin business"],cta:"Get certified"},
+        ].map((plan,i)=>(
+          <div key={plan.tier} className="lp-card" style={{background:plan.hi?(lp.dark?"rgba(6,182,212,0.05)":"rgba(6,182,212,0.04)"):lp.surf,border:`1px solid ${plan.hi?plan.color+"50":lp.bd}`,borderRadius:20,padding:"34px 26px",position:"relative",overflow:"hidden",...fu("pl",i*.12)}}>
+            {plan.badge&&<div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(90deg,#8b5cf6,#06b6d4)",borderRadius:"0 0 10px 10px",padding:"4px 16px",fontSize:9,fontWeight:700,color:"#fff",letterSpacing:2,whiteSpace:"nowrap"}}>{plan.badge}</div>}
+            <div style={{marginBottom:22,marginTop:plan.badge?18:0}}>
+              <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:11,fontWeight:700,color:plan.color,letterSpacing:1.2,marginBottom:10}}>{plan.tier.toUpperCase()}</div>
+              <div style={{display:"flex",alignItems:"baseline",gap:5}}>
+                <span style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:44,fontWeight:800,color:lp.txt,lineHeight:1}}>{plan.price}</span>
+                <span style={{fontSize:12,color:lp.mut}}>{plan.sub}</span>
+              </div>
+              <div style={{fontSize:11,color:lp.mut,marginTop:6}}>{plan.note}</div>
+            </div>
+            <div style={{borderTop:`1px solid ${lp.bd}`,paddingTop:20,marginBottom:24}}>
+              {plan.features.map(f=><div key={f} style={{display:"flex",alignItems:"center",gap:10,marginBottom:11,fontSize:13,color:lp.sub}}><span style={{color:plan.color,fontWeight:700,flexShrink:0}}>✓</span>{f}</div>)}
+            </div>
+            <button onClick={()=>setAuthOpen(true)} style={{width:"100%",padding:"13px",background:plan.hi?"linear-gradient(135deg,#8b5cf6,#06b6d4)":"none",border:`1px solid ${plan.hi?"transparent":lp.bd}`,borderRadius:10,color:plan.hi?"#fff":lp.sub,fontFamily:"'Inter',sans-serif",fontSize:14,fontWeight:600,cursor:"pointer",transition:"all .25s ease"}}>{plan.cta}</button>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div style={{background:lp.dark?"rgba(0,0,0,0.2)":"rgba(0,0,0,0.02)",borderTop:`1px solid ${lp.bd}`,padding:"80px 24px"}}>
+      <div ref={r("fq")} style={{maxWidth:720,margin:"0 auto"}}>
+        <div style={{textAlign:"center",marginBottom:48,...fu("fq")}}>
+          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,letterSpacing:3,color:lp.vl,textTransform:"uppercase",marginBottom:14}}>FAQ</div>
+          <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(24px,3.5vw,44px)",fontWeight:800,color:lp.txt,letterSpacing:-1}}>Common questions</h2>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:3}}>
+          {FAQS.map((faq,i)=>(
+            <div key={i} style={{background:lp.surf,border:`1px solid ${lp.bd}`,borderRadius:12,overflow:"hidden",...fu("fq",i*.05)}}>
+              <button onClick={()=>setOpen(open===i?null:i)} style={{width:"100%",padding:"18px 22px",background:"none",border:"none",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",gap:16}}>
+                <span style={{fontSize:14,fontWeight:600,color:lp.txt,textAlign:"left",fontFamily:"'Inter',sans-serif"}}>{faq.q}</span>
+                <span style={{fontSize:20,color:lp.mut,flexShrink:0,transform:open===i?"rotate(45deg)":"none",transition:"transform .2s ease",lineHeight:1}}>{open===i?"−":"+"}</span>
+              </button>
+              {open===i&&<div style={{padding:"0 22px 18px",fontSize:13,color:lp.sub,lineHeight:1.85}}>{faq.a}</div>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <div style={{padding:"80px 24px",textAlign:"center"}}>
+      <div ref={r("c")} style={{maxWidth:500,margin:"0 auto",...fu("c")}}>
+        <h3 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:28,fontWeight:800,color:lp.txt,letterSpacing:-.8,marginBottom:14}}>Free to start. No card needed.</h3>
+        <p style={{fontSize:13,color:lp.sub,marginBottom:28,lineHeight:1.75}}>Create your account and run your first evaluation in under 2 minutes.</p>
+        <button onClick={()=>setAuthOpen(true)} style={{padding:"15px 40px",background:"linear-gradient(135deg,#8b5cf6,#06b6d4)",border:"none",borderRadius:12,color:"#fff",fontFamily:"'Inter',sans-serif",fontSize:15,fontWeight:700,cursor:"pointer",boxShadow:"0 0 48px rgba(139,92,246,0.4)"}}>Create free account →</button>
+      </div>
+    </div>
+  </div>);
+}
+
+// ══════════════════════════════════════════════════════════
+// ABOUT
+// ══════════════════════════════════════════════════════════
+function LandingAbout({lp,setAuthOpen}) {
+  const {r,fu}=useRv();
+  return(<div>
+    <div style={{padding:"88px 24px 72px",textAlign:"center",borderBottom:`1px solid ${lp.bd}`,position:"relative"}}>
+      <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#f59e0b,#ef4444,transparent)",animation:"sweepLine 4s linear infinite"}}/>
+      <div ref={r("h")} style={{maxWidth:680,margin:"0 auto",...fu("h")}}>
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,letterSpacing:3,color:"#f59e0b",textTransform:"uppercase",marginBottom:20}}>About</div>
+        <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(34px,5.5vw,64px)",fontWeight:800,letterSpacing:-2.5,color:lp.txt,lineHeight:1.02,marginBottom:24}}>AI is powerful.<br/><span style={{background:"linear-gradient(135deg,#f59e0b,#ef4444)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Testing it shouldn't require a PhD.</span></h1>
+        <p style={{fontSize:17,color:lp.sub,lineHeight:1.85}}>We built the evaluation suite we wished existed when we started building AI products.</p>
+      </div>
+    </div>
+
+    <div ref={r("pr")} style={{maxWidth:1000,margin:"0 auto",padding:"80px 24px"}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:48,alignItems:"start"}}>
+        <div style={{...fu("pr")}}>
+          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,letterSpacing:3,color:lp.re,textTransform:"uppercase",marginBottom:16}}>The problem</div>
+          <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(22px,3vw,36px)",fontWeight:800,color:lp.txt,letterSpacing:-.8,marginBottom:20,lineHeight:1.1}}>AI models fail silently. At scale.</h2>
+          {["A confident hallucination looks identical to a correct answer.","Safety issues only appear under specific adversarial conditions.","Bias compounds invisibly across millions of user interactions.","No standard exists for what 'safe enough to deploy' even means."].map(t=>(
+            <div key={t} style={{display:"flex",gap:12,alignItems:"flex-start",marginBottom:14}}>
+              <span style={{color:lp.re,flexShrink:0,marginTop:2,fontSize:14}}>✗</span>
+              <span style={{fontSize:13,color:lp.sub,lineHeight:1.75}}>{t}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{...fu("pr",.15)}}>
+          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,letterSpacing:3,color:lp.gr,textTransform:"uppercase",marginBottom:16}}>Our solution</div>
+          <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(22px,3vw,36px)",fontWeight:800,color:lp.txt,letterSpacing:-.8,marginBottom:20,lineHeight:1.1}}>Standardized. Automated. Accessible.</h2>
+          {["33 automated stages grounded in published academic benchmarks.","Claude Sonnet 4 grades every response — consistent, unbiased, instant.","Works with any AI API in OpenAI or Anthropic format.","Results in minutes. Free to start. No expertise required."].map(t=>(
+            <div key={t} style={{display:"flex",gap:12,alignItems:"flex-start",marginBottom:14}}>
+              <span style={{color:lp.gr,flexShrink:0,marginTop:2,fontSize:14}}>✓</span>
+              <span style={{fontSize:13,color:lp.sub,lineHeight:1.75}}>{t}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <div style={{background:lp.dark?"rgba(245,158,11,0.04)":"rgba(245,158,11,0.03)",borderTop:`1px solid ${lp.bd}`,borderBottom:`1px solid ${lp.bd}`,padding:"80px 24px"}}>
+      <div ref={r("ms")} style={{maxWidth:800,margin:"0 auto",textAlign:"center",...fu("ms")}}>
+        <div style={{fontSize:40,marginBottom:20}}>⚡</div>
+        <blockquote style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(20px,2.5vw,32px)",fontWeight:700,color:lp.txt,lineHeight:1.45,letterSpacing:-.5,margin:"0 0 24px",fontStyle:"normal"}}>
+          "Every team building AI deserves a standardized, honest evaluation — not just the ones with large AI safety teams."
+        </blockquote>
+        <div style={{fontSize:12,color:lp.mut,fontFamily:"'JetBrains Mono',monospace",letterSpacing:2}}>THE TYTHOS MISSION</div>
+      </div>
+    </div>
+
+    <div ref={r("cv")} style={{maxWidth:1000,margin:"0 auto",padding:"80px 24px"}}>
+      <div style={{textAlign:"center",marginBottom:48,...fu("cv")}}>
+        <h2 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"clamp(24px,3.5vw,44px)",fontWeight:800,color:lp.txt,letterSpacing:-1.5,marginBottom:12}}>What we test for</h2>
+        <p style={{fontSize:14,color:lp.sub,maxWidth:400,margin:"0 auto"}}>Every dimension that matters in production AI systems.</p>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:14}}>
+        {[{ic:"🧠",t:"Factual accuracy",d:"MMLU, TruthfulQA, GSM8K"},{ic:"👁",t:"Hallucination",d:"Fake entity traps, FactScore"},{ic:"🛡",t:"Safety & refusals",d:"JailbreakBench, PAIR, TAP"},{ic:"⚖",t:"Bias & fairness",d:"BBQ, WinoGender, counterfactuals"},{ic:"🚀",t:"Latency & performance",d:"P50/P95/P99, tokens/sec"},{ic:"🔁",t:"Consistency",d:"5-run semantic stability"},{ic:"💉",t:"Prompt injection",d:"Direct, indirect, delayed"},{ic:"🎭",t:"Sycophancy",d:"Persistence, authority, flattery"}].map((x,i)=>(
+          <div key={x.t} className="lp-card" style={{background:lp.surf,border:`1px solid ${lp.bd}`,borderRadius:14,padding:"20px 18px",...fu("cv",i*.05)}}>
+            <div style={{fontSize:26,marginBottom:10}}>{x.ic}</div>
+            <div style={{fontSize:13,fontWeight:600,color:lp.txt,marginBottom:4}}>{x.t}</div>
+            <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,color:lp.mut}}>{x.d}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div style={{padding:"80px 24px",textAlign:"center"}}>
+      <div ref={r("c")} style={{maxWidth:500,margin:"0 auto",...fu("c")}}>
+        <h3 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:28,fontWeight:800,color:lp.txt,letterSpacing:-.8,marginBottom:14}}>Join us in making AI safer.</h3>
+        <p style={{fontSize:13,color:lp.sub,marginBottom:28,lineHeight:1.75}}>Start evaluating your AI for free. No credit card, no setup, no expertise required.</p>
+        <button onClick={()=>setAuthOpen(true)} style={{padding:"15px 40px",background:"linear-gradient(135deg,#f59e0b,#ef4444)",border:"none",borderRadius:12,color:"#fff",fontFamily:"'Inter',sans-serif",fontSize:15,fontWeight:700,cursor:"pointer",boxShadow:"0 0 48px rgba(245,158,11,0.4)"}}>Start your free evaluation →</button>
+      </div>
+    </div>
+  </div>);
+}
+
+// ══════════════════════════════════════════════════════════
+// LANDING PAGE — wrapper
+// ══════════════════════════════════════════════════════════
+function LandingPage({ T, dark, setAuthOpen, page }) {
+  const lp = mkLP(dark);
+
   return (
-    <div style={{ background:bg, position:"relative", overflow:"hidden" }}>
+    <div style={{background:lp.bg,position:"relative",overflow:"hidden"}}>
       <style>{`
-        @keyframes blob1{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(60px,-40px) scale(1.1)}66%{transform:translate(-40px,60px) scale(0.9)}}
-        @keyframes blob2{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-80px,60px) scale(1.05)}66%{transform:translate(60px,-80px) scale(0.95)}}
-        @keyframes blob3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,40px) scale(1.08)}}
         @keyframes shimmerText{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
         @keyframes floatY{0%,100%{transform:translateY(0px)}50%{transform:translateY(-14px)}}
         @keyframes scanDown{0%{transform:translateY(-100%)}100%{transform:translateY(100vh)}}
-        .lp-card{transition:transform 0.3s cubic-bezier(0.16,1,0.3,1),box-shadow 0.3s ease,border-color 0.3s ease!important;}
-        .lp-card:hover{transform:translateY(-5px) scale(1.01)!important;}
-        .lp-phase:hover{border-color:var(--ph-color)!important;}
-        .lp-btn:hover{transform:translateY(-2px)!important;box-shadow:0 0 64px rgba(124,58,237,0.7)!important;}
-        .lp-secondary:hover{border-color:rgba(124,58,237,0.5)!important;color:#b794f4!important;}
-        .lp-step:hover .step-num{color:#b794f4!important;border-color:rgba(124,58,237,0.5)!important;}
-        .pricing-btn:hover{background:rgba(124,58,237,0.12)!important;border-color:rgba(124,58,237,0.4)!important;color:#b794f4!important;}
+        @keyframes blob1{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(60px,-40px) scale(1.1)}66%{transform:translate(-40px,60px) scale(0.9)}}
+        @keyframes blob2{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-80px,60px) scale(1.05)}66%{transform:translate(60px,-80px) scale(0.95)}}
+        @keyframes blob3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,40px) scale(1.08)}}
+        .lp-card{transition:transform .3s cubic-bezier(.16,1,.3,1),box-shadow .3s ease,border-color .3s ease!important;}
+        .lp-card:hover{transform:translateY(-4px) scale(1.005)!important;}
+        .lp-btn:hover{transform:translateY(-2px)!important;box-shadow:0 0 64px rgba(139,92,246,0.7)!important;}
+        .lp-secondary:hover{border-color:rgba(139,92,246,0.5)!important;color:#c4b5fd!important;}
       `}</style>
-
-      {/* Animated gradient orbs */}
-      {dark&&<div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
-        <div style={{position:"absolute",width:700,height:700,borderRadius:"50%",background:"radial-gradient(circle,rgba(124,58,237,0.18),transparent 65%)",top:"-25%",left:"-15%",animation:"blob1 20s ease-in-out infinite",filter:"blur(70px)"}}/>
-        <div style={{position:"absolute",width:550,height:550,borderRadius:"50%",background:"radial-gradient(circle,rgba(0,212,255,0.13),transparent 65%)",top:"25%",right:"-18%",animation:"blob2 24s ease-in-out infinite",filter:"blur(70px)"}}/>
-        <div style={{position:"absolute",width:450,height:450,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,160,23,0.09),transparent 65%)",bottom:"-15%",left:"30%",animation:"blob3 17s ease-in-out infinite",filter:"blur(70px)"}}/>
+      {lp.dark&&<div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
+        <div style={{position:"absolute",width:700,height:700,borderRadius:"50%",background:"radial-gradient(circle,rgba(139,92,246,0.16),transparent 65%)",top:"-25%",left:"-15%",animation:"blob1 20s ease-in-out infinite",filter:"blur(72px)"}}/>
+        <div style={{position:"absolute",width:550,height:550,borderRadius:"50%",background:"radial-gradient(circle,rgba(6,182,212,0.11),transparent 65%)",top:"25%",right:"-18%",animation:"blob2 24s ease-in-out infinite",filter:"blur(72px)"}}/>
+        <div style={{position:"absolute",width:450,height:450,borderRadius:"50%",background:"radial-gradient(circle,rgba(245,158,11,0.08),transparent 65%)",bottom:"-15%",left:"30%",animation:"blob3 17s ease-in-out infinite",filter:"blur(72px)"}}/>
       </div>}
-
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {/* HERO                                                    */}
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"80px 24px 100px",position:"relative",zIndex:1}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#7c3aed,#00d4ff,transparent)",animation:"sweepLine 4s linear infinite"}}/>
-        {/* Scan line */}
-        {dark&&<div style={{position:"absolute",left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(124,58,237,0.3),transparent)",animation:"scanDown 8s linear infinite",pointerEvents:"none",zIndex:0}}/>}
-        {/* Stars */}
-        {dark&&stars.map(([l,t,sz,d,dl],i)=>(
-          <div key={i} style={{position:"absolute",left:l+"%",top:t+"%",width:sz,height:sz,borderRadius:"50%",background:"#fff",animation:`starPulse ${d} ease-in-out infinite ${dl}`,pointerEvents:"none"}}/>
-        ))}
-
-        <div ref={rref("hero")} style={{maxWidth:820,textAlign:"center",position:"relative",zIndex:1}}>
-          {/* Badge */}
-          <div style={{display:"inline-flex",alignItems:"center",gap:8,background:dark?"rgba(124,58,237,0.1)":"rgba(124,58,237,0.07)",border:"1px solid rgba(124,58,237,0.35)",borderRadius:100,padding:"6px 18px",marginBottom:32,...fu("hero")}}>
-            <div style={{width:6,height:6,borderRadius:"50%",background:"#7c3aed",animation:"pulse 2s ease-in-out infinite"}}/>
-            <span className="mono" style={{fontSize:10,letterSpacing:2.5,color:"#b794f4",fontWeight:600}}>AI EVALUATION PLATFORM · FREE TO START</span>
-          </div>
-
-          {/* Headline */}
-          <h1 className="syne" style={{fontSize:"clamp(44px,7.5vw,84px)",fontWeight:800,letterSpacing:-3,color:txt,lineHeight:0.96,marginBottom:26,...fu("hero",0.08)}}>
-            Know exactly<br/>
-            <span style={{background:"linear-gradient(135deg,#b794f4 0%,#00d4ff 50%,#d4a017 100%)",backgroundSize:"200% 200%",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",animation:"shimmerText 5s ease infinite"}}>how good your AI is</span>
-          </h1>
-
-          {/* Sub */}
-          <p style={{fontSize:18,color:muted,lineHeight:1.85,maxWidth:560,margin:"0 auto 44px",fontWeight:400,...fu("hero",0.16)}}>
-            Paste any AI endpoint URL. Run <strong style={{color:txt,fontWeight:600}}>33 automated test stages</strong> across 7 phases. Get a scored safety report with actionable findings — no expertise required.
-          </p>
-
-          {/* CTAs */}
-          <div style={{display:"flex",gap:14,justifyContent:"center",flexWrap:"wrap",marginBottom:64,...fu("hero",0.24)}}>
-            <button className="lp-btn" onClick={()=>setAuthOpen(true)} style={{padding:"16px 40px",background:"linear-gradient(135deg,#7c3aed,#0891b2)",border:"none",borderRadius:12,color:"#fff",fontFamily:"'DM Sans',sans-serif",fontSize:16,fontWeight:700,cursor:"pointer",boxShadow:"0 0 48px rgba(124,58,237,0.5)",transition:"all 0.3s ease",letterSpacing:0.3}}>
-              Start for free — no card needed
-            </button>
-            <button className="lp-secondary" onClick={()=>setAuthOpen(true)} style={{padding:"16px 28px",background:"none",border:`1px solid ${bd}`,borderRadius:12,color:muted,fontFamily:"'DM Sans',sans-serif",fontSize:15,fontWeight:500,cursor:"pointer",transition:"all 0.3s ease"}}>
-              Sign in
-            </button>
-          </div>
-
-          {/* Stats */}
-          <div style={{display:"flex",justifyContent:"center",flexWrap:"wrap",...fu("hero",0.32)}}>
-            {[["33","Test stages"],["7","Eval phases"],["3","Free runs/mo"],["0","API keys needed"]].map(([n,l],i,arr)=>(
-              <div key={l} style={{textAlign:"center",padding:"0 32px",borderRight:i<arr.length-1?`1px solid ${bd}`:"none"}}>
-                <div className="syne" style={{fontSize:34,fontWeight:800,color:"#b794f4",lineHeight:1}}>{n}</div>
-                <div style={{fontSize:11,color:muted,marginTop:7,letterSpacing:0.3}}>{l}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Scroll hint */}
-        <div style={{position:"absolute",bottom:36,left:"50%",transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:8,opacity:0.35,zIndex:1}}>
-          <span className="mono" style={{fontSize:8,letterSpacing:4,color:muted,textTransform:"uppercase"}}>scroll</span>
-          <div style={{width:1,height:44,background:`linear-gradient(to bottom,${bd},transparent)`}}/>
-        </div>
+      <div style={{position:"relative",zIndex:1}}>
+        {page==="home"     && <LandingHome     lp={lp} setAuthOpen={setAuthOpen} />}
+        {page==="features" && <LandingFeatures lp={lp} setAuthOpen={setAuthOpen} />}
+        {page==="pricing"  && <LandingPricing  lp={lp} setAuthOpen={setAuthOpen} />}
+        {page==="about"    && <LandingAbout    lp={lp} setAuthOpen={setAuthOpen} />}
       </div>
-
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {/* PROBLEM BAR                                             */}
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{borderTop:`1px solid ${bd}`,borderBottom:`1px solid ${bd}`,background:dark?"rgba(255,255,255,0.015)":"rgba(0,0,0,0.02)",padding:"36px 24px",position:"relative",zIndex:1}}>
-        <div style={{maxWidth:1000,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"center",gap:40,flexWrap:"wrap"}}>
-          {[["⚠","Silent failures","AI fails confidently — users trust wrong answers"],["🔁","No standard test","Every team reinvents evaluation from scratch"],["🚀","Deploy blind","Most teams ship AI without safety testing"]].map(([icon,title,sub])=>(
-            <div key={title} style={{display:"flex",alignItems:"center",gap:14,minWidth:240}}>
-              <div style={{width:40,height:40,borderRadius:12,background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{icon}</div>
-              <div>
-                <div style={{fontSize:13,fontWeight:600,color:txt,marginBottom:2}}>{title}</div>
-                <div style={{fontSize:11,color:muted}}>{sub}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {/* HOW IT WORKS                                            */}
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div ref={rref("how")} style={{maxWidth:1100,margin:"0 auto",padding:"100px 24px",position:"relative",zIndex:1}}>
-        <div style={{textAlign:"center",marginBottom:64,...fu("how")}}>
-          <div className="mono" style={{fontSize:10,letterSpacing:3,color:"#7c3aed",textTransform:"uppercase",marginBottom:14}}>How it works</div>
-          <h2 className="syne" style={{fontSize:"clamp(28px,4vw,52px)",fontWeight:800,color:txt,letterSpacing:-1.5,marginBottom:14}}>From endpoint to insight<br/>in minutes</h2>
-          <p style={{fontSize:14,color:muted,maxWidth:400,margin:"0 auto"}}>Three steps. No setup. No expertise required.</p>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:24}}>
-          {[
-            {n:"01",icon:"🔗",title:"Paste your endpoint",desc:"Drop in any AI API URL — OpenAI, Anthropic, Azure, or your own endpoint. No config, no SDK.",color:"#7c3aed"},
-            {n:"02",icon:"⚡",title:"Run 33 test stages",desc:"The suite fires hundreds of crafted prompts across 7 evaluation phases. Every known failure mode is tested automatically.",color:"#0891b2"},
-            {n:"03",icon:"📊",title:"Get your scored report",desc:"A full scored report with per-stage breakdowns, an AI-written executive summary, and a certification badge.",color:"#d4a017"},
-          ].map((step,i)=>(
-            <div key={step.n} className="lp-card lp-step" ref={rref("step"+i)} style={{background:surf,border:`1px solid ${bd}`,borderRadius:18,padding:"34px 28px",position:"relative",overflow:"hidden",...fu("how",i*0.14)}}>
-              <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:step.color}}/>
-              <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:22}}>
-                <div style={{width:48,height:48,borderRadius:14,background:step.color+"18",border:`1px solid ${step.color}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{step.icon}</div>
-                <span className="step-num mono" style={{fontSize:12,fontWeight:700,color:step.color,letterSpacing:1,transition:"all 0.3s"}}>{step.n}</span>
-              </div>
-              <h3 style={{fontSize:17,fontWeight:700,color:txt,marginBottom:10,letterSpacing:-0.3}}>{step.title}</h3>
-              <p style={{fontSize:13,color:muted,lineHeight:1.8}}>{step.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {/* ANIMATED METRICS                                        */}
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{background:dark?"rgba(124,58,237,0.04)":"rgba(124,58,237,0.03)",borderTop:`1px solid ${bd}`,borderBottom:`1px solid ${bd}`,padding:"88px 24px",position:"relative",zIndex:1}}>
-        <div style={{position:"absolute",inset:0,background:dark?"radial-gradient(ellipse at 50% 50%,rgba(124,58,237,0.07),transparent 65%)":"none",pointerEvents:"none"}}/>
-        <div ref={rref("metrics")} style={{maxWidth:1000,margin:"0 auto"}}>
-          <div style={{textAlign:"center",marginBottom:60,...fu("metrics")}}>
-            <h2 className="syne" style={{fontSize:"clamp(26px,3.5vw,48px)",fontWeight:800,color:txt,letterSpacing:-1.5,marginBottom:12}}>Built on real benchmarks</h2>
-            <p style={{fontSize:14,color:muted,marginTop:8}}>Not vibes — published academic benchmarks and adversarial security research.</p>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:18}}>
-            {[
-              {val:counts.stages,suf:"",label:"Test stages",sub:"Every AI failure mode",color:"#b794f4"},
-              {val:counts.phases,suf:"",label:"Eval phases",sub:"Core to behavioral",color:"#00d4ff"},
-              {val:counts.probes,suf:"+",label:"Probes per run",sub:"Crafted test prompts",color:"#d4a017"},
-              {val:"~$0.90",suf:"",label:"Cost per run",sub:"Tythos covers it free",color:"#4ade80",str:true},
-              {val:"AI",suf:"",label:"Graded by",sub:"Claude Sonnet 4",color:"#f472b6",str:true},
-            ].map((m,i)=>(
-              <div key={m.label} className="lp-card" style={{background:surf,border:`1px solid ${bd}`,borderRadius:16,padding:"26px 20px",textAlign:"center",...fu("metrics",i*0.08)}}>
-                <div className="syne" style={{fontSize:42,fontWeight:800,color:m.color,lineHeight:1,marginBottom:8}}>
-                  {m.str?m.val:m.val}{m.suf}
-                </div>
-                <div style={{fontSize:13,fontWeight:600,color:txt,marginBottom:4}}>{m.label}</div>
-                <div style={{fontSize:11,color:muted}}>{m.sub}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {/* 7 PHASES                                                */}
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div ref={rref("phases")} style={{maxWidth:1240,margin:"0 auto",padding:"100px 24px",position:"relative",zIndex:1}}>
-        <div style={{textAlign:"center",marginBottom:60,...fu("phases")}}>
-          <div className="mono" style={{fontSize:10,letterSpacing:3,color:"#0891b2",textTransform:"uppercase",marginBottom:14}}>7 Evaluation Phases</div>
-          <h2 className="syne" style={{fontSize:"clamp(28px,4vw,52px)",fontWeight:800,color:txt,letterSpacing:-1.5,marginBottom:14}}>Everything covered.<br/>Nothing assumed.</h2>
-          <p style={{fontSize:14,color:muted,maxWidth:500,margin:"0 auto"}}>33 automated test stages probe every known AI failure mode — from basic hallucination to sophisticated adversarial attacks.</p>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(310px,1fr))",gap:16}}>
-          {PHASES.map((ph,i)=>(
-            <div key={ph.id} className="lp-card lp-phase" ref={rref("ph"+i)}
-              style={{background:surf,border:`1px solid ${bd}`,borderRadius:18,padding:"26px 24px",position:"relative",overflow:"hidden","--ph-color":ph.color,...fu("phases",i*0.07)}}
-              onMouseEnter={e=>{e.currentTarget.style.borderColor=ph.color+"55";e.currentTarget.style.boxShadow=`0 16px 48px ${ph.color}20`;}}
-              onMouseLeave={e=>{e.currentTarget.style.borderColor=bd;e.currentTarget.style.boxShadow="none";}}>
-              <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${ph.color},${ph.color}55)`}}/>
-              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:14}}>
-                <div>
-                  <div style={{fontSize:12,fontWeight:700,color:ph.color,letterSpacing:0.8,marginBottom:4}}>{ph.label.toUpperCase()}</div>
-                  <div className="mono" style={{fontSize:10,color:ph.color+"70"}}>{ph.stages.length} stages</div>
-                </div>
-                <div style={{background:ph.color+"15",border:`1px solid ${ph.color}30`,borderRadius:8,padding:"4px 10px",fontFamily:"'Fira Code',monospace",fontSize:10,color:ph.color,whiteSpace:"nowrap"}}>Phase {i+1}</div>
-              </div>
-              <p style={{fontSize:12,color:muted,lineHeight:1.8,marginBottom:16}}>{ph.desc}</p>
-              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                {ph.stages.map(s=>(
-                  <div key={s} style={{display:"flex",alignItems:"center",gap:5,background:dark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.04)",border:`1px solid ${bd}`,borderRadius:7,padding:"3px 9px"}}>
-                    <span style={{fontSize:12}}>{STAGE_META[s]?.icon}</span>
-                    <span className="mono" style={{fontSize:10,color:muted}}>{STAGE_META[s]?.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {/* WHAT YOU GET (terminal mockup)                          */}
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{background:dark?"rgba(0,0,0,0.25)":"rgba(0,0,0,0.02)",borderTop:`1px solid ${bd}`,borderBottom:`1px solid ${bd}`,padding:"100px 24px",position:"relative",zIndex:1}}>
-        <div ref={rref("output")} style={{maxWidth:1060,margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(320px,1fr))",gap:60,alignItems:"center"}}>
-          <div style={{...fu("output")}}>
-            <div className="mono" style={{fontSize:10,letterSpacing:3,color:"#d4a017",textTransform:"uppercase",marginBottom:18}}>What you get</div>
-            <h2 className="syne" style={{fontSize:"clamp(26px,3.5vw,46px)",fontWeight:800,color:txt,letterSpacing:-1,marginBottom:28}}>A report that<br/>tells you the truth</h2>
-            <div style={{display:"flex",flexDirection:"column",gap:18}}>
-              {[
-                {icon:"🎯",title:"Overall score /100",desc:"Single number with risk classification — Low, Medium, or High Risk."},
-                {icon:"📋",title:"Per-stage breakdowns",desc:"Every stage has a score, verdict, and beginner-friendly explanation."},
-                {icon:"📝",title:"AI executive summary",desc:"Claude writes a full report with findings, risks, and actionable recommendations."},
-                {icon:"🏆",title:"Certification badge",desc:"Gold / Silver / Bronze / Not Certified — shareable PDF with your score."},
-              ].map(item=>(
-                <div key={item.title} style={{display:"flex",gap:16,alignItems:"flex-start"}}>
-                  <div style={{width:44,height:44,borderRadius:12,background:dark?"rgba(212,160,23,0.1)":"rgba(212,160,23,0.08)",border:"1px solid rgba(212,160,23,0.25)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{item.icon}</div>
-                  <div>
-                    <div style={{fontSize:14,fontWeight:600,color:txt,marginBottom:4}}>{item.title}</div>
-                    <div style={{fontSize:12,color:muted,lineHeight:1.75}}>{item.desc}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          {/* Terminal preview */}
-          <div style={{...fu("output",0.2)}}>
-            <div style={{background:dark?"#04040e":"#f0f0fa",border:`1px solid ${bd}`,borderRadius:18,overflow:"hidden",boxShadow:dark?"0 32px 80px rgba(0,0,0,0.6)":"0 24px 60px rgba(0,0,0,0.08)",fontFamily:"'Fira Code',monospace",fontSize:11}}>
-              <div style={{background:dark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.04)",padding:"12px 16px",display:"flex",alignItems:"center",gap:8,borderBottom:`1px solid ${bd}`}}>
-                {["#ff5f56","#ffbd2e","#27c93f"].map(c=><div key={c} style={{width:11,height:11,borderRadius:"50%",background:c}}/>)}
-                <span style={{fontSize:10,color:muted,marginLeft:8,letterSpacing:1}}>tythos — evaluation report</span>
-              </div>
-              <div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:4}}>
-                {[
-                  {c:dark?"#6b7280":"#9ca3af",t:"Tythos AI Evaluation v5.0 — 33 stages"},
-                  {c:"#00d4ff",t:"[ PHASE 1 ] Core Intelligence"},
-                  {c:"#4ade80",t:"  ✓ connectivity    97/100"},
-                  {c:"#4ade80",t:"  ✓ functional      91/100"},
-                  {c:"#f87171",t:"  ✗ hallucination   48/100  ← CRITICAL"},
-                  {c:"#4ade80",t:"  ✓ safety          89/100"},
-                  {c:"#fb923c",t:"  ⚠ bias            62/100"},
-                  {c:"#a855f7",t:"[ PHASE 2 ] Deep Evaluation"},
-                  {c:"#4ade80",t:"  ✓ semantic         85/100"},
-                  {c:"#4ade80",t:"  ✓ calibration      82/100"},
-                  {c:"#d4a017",t:"─────────────────────────────────"},
-                  {c:"#d4a017",t:"OVERALL SCORE:  72 / 100"},
-                  {c:"#fbbf24",t:"RISK LEVEL:     Medium Risk"},
-                  {c:"#d4a017",t:"CERTIFICATION:  Silver · 22/33 passed"},
-                ].map((line,i)=>(
-                  <div key={i} style={{color:line.c,lineHeight:1.6}}>{line.t}</div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {/* PRICING                                                 */}
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div ref={rref("pricing")} style={{maxWidth:1000,margin:"0 auto",padding:"100px 24px",position:"relative",zIndex:1}}>
-        <div style={{textAlign:"center",marginBottom:60,...fu("pricing")}}>
-          <div className="mono" style={{fontSize:10,letterSpacing:3,color:"#4ade80",textTransform:"uppercase",marginBottom:14}}>Pricing</div>
-          <h2 className="syne" style={{fontSize:"clamp(28px,4vw,52px)",fontWeight:800,color:txt,letterSpacing:-1.5,marginBottom:14}}>Start free.<br/>Scale when ready.</h2>
-          <p style={{fontSize:14,color:muted,maxWidth:380,margin:"0 auto"}}>No credit card required. The first 3 runs are on us — every month.</p>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(270px,1fr))",gap:20}}>
-          {[
-            {tier:"Free",price:"$0",sub:"/month",badge:null,features:["3 runs per month","33 evaluation stages","AI-graded report","PDF certificate export","Certification badge"],cta:"Get started free",color:"#7c3aed",hi:false},
-            {tier:"Pro",price:"$49",sub:"/month",badge:"MOST POPULAR",features:["Unlimited runs","Everything in Free","Full run history","Priority grading queue","Shareable report links"],cta:"Upgrade to Pro",color:"#00d4ff",hi:true},
-            {tier:"Certified Report",price:"$299",sub:"one-time",badge:null,features:["Co-branded PDF report","Shareable certificate","Official certification","~$0.90 total API cost","99.7% margin business"],cta:"Get certified",color:"#d4a017",hi:false},
-          ].map((plan,i)=>(
-            <div key={plan.tier} className="lp-card" style={{background:plan.hi?(dark?"rgba(0,212,255,0.04)":"rgba(0,212,255,0.03)"):surf,border:`1px solid ${plan.hi?plan.color+"45":bd}`,borderRadius:20,padding:"34px 26px",position:"relative",overflow:"hidden",...fu("pricing",i*0.12)}}>
-              {plan.badge&&<div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(90deg,#7c3aed,#0891b2)",borderRadius:"0 0 10px 10px",padding:"4px 16px",fontSize:9,fontWeight:700,color:"#fff",letterSpacing:2,whiteSpace:"nowrap"}}>{plan.badge}</div>}
-              <div style={{marginBottom:22,marginTop:plan.badge?18:0}}>
-                <div style={{fontSize:11,fontWeight:700,color:plan.color,letterSpacing:1.2,marginBottom:10}}>{plan.tier.toUpperCase()}</div>
-                <div style={{display:"flex",alignItems:"baseline",gap:5}}>
-                  <span className="syne" style={{fontSize:44,fontWeight:800,color:txt,lineHeight:1}}>{plan.price}</span>
-                  <span style={{fontSize:12,color:muted}}>{plan.sub}</span>
-                </div>
-              </div>
-              <div style={{borderTop:`1px solid ${bd}`,paddingTop:20,marginBottom:24}}>
-                {plan.features.map(f=>(
-                  <div key={f} style={{display:"flex",alignItems:"center",gap:10,marginBottom:11,fontSize:13,color:muted}}>
-                    <span style={{color:plan.color,fontWeight:700,fontSize:14,flexShrink:0}}>✓</span>{f}
-                  </div>
-                ))}
-              </div>
-              <button
-                className="pricing-btn"
-                onClick={()=>setAuthOpen(true)}
-                style={{width:"100%",padding:"13px",background:plan.hi?"linear-gradient(135deg,#7c3aed,#0891b2)":"none",border:`1px solid ${plan.hi?"transparent":bd}`,borderRadius:10,color:plan.hi?"#fff":muted,fontFamily:"'DM Sans',sans-serif",fontSize:14,fontWeight:600,cursor:"pointer",transition:"all 0.25s ease"}}
-              >
-                {plan.cta}
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {/* FINAL CTA                                               */}
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div ref={rref("cta")} style={{position:"relative",zIndex:1,overflow:"hidden"}}>
-        <div style={{background:dark?"linear-gradient(135deg,rgba(124,58,237,0.12),rgba(8,145,178,0.08))":"linear-gradient(135deg,rgba(124,58,237,0.06),rgba(8,145,178,0.04))",borderTop:`1px solid ${bd}`,padding:"110px 24px"}}>
-          <div style={{position:"absolute",inset:0,background:dark?"radial-gradient(ellipse at 50% 0%,rgba(124,58,237,0.18),transparent 65%)":"none",pointerEvents:"none"}}/>
-          <div style={{maxWidth:600,margin:"0 auto",textAlign:"center",...fu("cta")}}>
-            <div style={{fontSize:48,marginBottom:24,animation:"floatY 3.5s ease-in-out infinite",display:"inline-block"}}>⚡</div>
-            <h2 className="syne" style={{fontSize:"clamp(32px,5vw,60px)",fontWeight:800,color:txt,letterSpacing:-2,marginBottom:18}}>
-              Your AI deserves<br/>
-              <span style={{background:"linear-gradient(135deg,#b794f4,#00d4ff)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>an honest evaluation</span>
-            </h2>
-            <p style={{fontSize:16,color:muted,marginBottom:40,lineHeight:1.85,maxWidth:460,margin:"0 auto 40px"}}>
-              Join the teams using Tythos to ship AI they can trust. Free account. 3 runs included every month. No credit card required.
-            </p>
-            <button className="lp-btn" onClick={()=>setAuthOpen(true)} style={{padding:"18px 52px",background:"linear-gradient(135deg,#7c3aed,#0891b2)",border:"none",borderRadius:14,color:"#fff",fontFamily:"'DM Sans',sans-serif",fontSize:18,fontWeight:700,cursor:"pointer",boxShadow:"0 0 60px rgba(124,58,237,0.55)",transition:"all 0.3s ease",letterSpacing:0.3}}>
-              Start your free evaluation →
-            </button>
-            <div style={{marginTop:18,fontSize:12,color:muted}}>Free · 3 runs/month · No credit card</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div style={{borderTop:`1px solid ${bd}`,padding:"28px 24px",textAlign:"center",position:"relative",zIndex:1}}>
-        <div className="mono" style={{fontSize:9,color:dark?"rgba(255,255,255,0.18)":"rgba(0,0,0,0.2)",letterSpacing:2,textTransform:"uppercase"}}>
-          TYTHOS AI EVALUATION v5.0 · 33 STAGES · 7 PHASES · POWERED BY CLAUDE SONNET 4
-        </div>
+      <div style={{borderTop:`1px solid ${lp.bd}`,padding:"26px 24px",textAlign:"center",position:"relative",zIndex:1}}>
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:9,color:lp.mut,letterSpacing:2,textTransform:"uppercase"}}>TYTHOS AI EVALUATION v5.0 · 33 STAGES · 7 PHASES · POWERED BY CLAUDE SONNET 4</div>
       </div>
     </div>
   );
@@ -867,6 +984,7 @@ export default function App() {
   const [report, setReport]   = useState("");
   const [overall, setOverall] = useState(null);
   const [tab, setTab]         = useState("run");
+  const [page, setPage]       = useState("home");
   const [selPhase, setSelPhase] = useState("core");
   const [openStage, setOpenStage] = useState(null);
   const [showIntro, setShowIntro] = useState(false);
@@ -2343,11 +2461,11 @@ export default function App() {
   const pct = progress.total > 0 ? Math.round(progress.done / progress.total * 100) : 0;
 
   return (
-    <div style={{ minHeight:"100vh", background:T.bg, color:T.text, fontFamily:"'DM Sans',system-ui,sans-serif", transition:"background .25s,color .25s" }}>
+    <div style={{ minHeight:"100vh", background:T.bg, color:T.text, fontFamily:"'Inter',system-ui,sans-serif", transition:"background .25s,color .25s" }}>
       <Toasts toasts={toasts} remove={removeToast} />
       {authOpen&&<Auth dark={dark} onClose={()=>setAuthOpen(false)} />}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Fira+Code:wght@400;500;600&family=Syne:wght@700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;}
         ::-webkit-scrollbar{width:3px;height:3px;}
         ::-webkit-scrollbar-track{background:transparent;}
@@ -2359,8 +2477,8 @@ export default function App() {
         @keyframes tythosGlow{0%,100%{box-shadow:0 0 20px rgba(124,58,237,0.15),0 0 60px rgba(0,212,255,0.05)}50%{box-shadow:0 0 40px rgba(124,58,237,0.3),0 0 80px rgba(0,212,255,0.1)}}
         @keyframes starPulse{0%,100%{opacity:0.3}50%{opacity:1}}
         @keyframes borderGlow{0%,100%{border-color:rgba(124,58,237,0.3)}50%{border-color:rgba(124,58,237,0.8)}}
-        .syne{font-family:'Syne',sans-serif;}
-        .mono{font-family:'Fira Code',monospace;}
+        .syne{font-family:'Space Grotesk',sans-serif;}
+        .mono{font-family:'JetBrains Mono',monospace;}
         .fade{animation:fadeUp .3s ease forwards;}
         .tythos-card:hover{animation:tythosGlow 3s ease-in-out infinite;transition:all .2s;}
         input::placeholder{color:${dark?"rgba(184,160,255,0.25)":"rgba(0,0,0,0.25)"};}
@@ -2389,31 +2507,39 @@ export default function App() {
 
           {/* Nav tabs */}
           <div style={{ display:"flex", gap:2 }} className="no-print">
-            {[["run","Live Run"],["results","Results"],["report","Report"],["cert","Certificate"],...(user?[["history","History"]]:[])] .map(([id,lbl])=>(
-              <button key={id} onClick={()=>setTab(id)} style={{ padding:"8px 16px", background:tab===id?(dark?"rgba(124,58,237,0.15)":"rgba(124,58,237,0.08)"):"none", border:"none", borderRadius:7, color:tab===id?(id==="cert"?"#d4a017":T.accentFg):T.textSub, fontFamily:"'DM Sans',sans-serif", fontSize:13, fontWeight:tab===id?600:400, cursor:"pointer", transition:"all .18s" }}>
-                {lbl}
-              </button>
-            ))}
+            {user ? (
+              [["run","Live Run"],["results","Results"],["report","Report"],["cert","Certificate"],["history","History"]].map(([id,lbl])=>(
+                <button key={id} onClick={()=>setTab(id)} style={{ padding:"8px 16px", background:tab===id?(dark?"rgba(139,92,246,0.15)":"rgba(139,92,246,0.08)"):"none", border:"none", borderRadius:7, color:tab===id?(id==="cert"?"#f59e0b":"#c4b5fd"):T.textSub, fontFamily:"'Inter',sans-serif", fontSize:13, fontWeight:tab===id?600:400, cursor:"pointer", transition:"all .18s" }}>
+                  {lbl}
+                </button>
+              ))
+            ) : (
+              [["home","Home"],["features","Features"],["pricing","Pricing"],["about","About"]].map(([id,lbl])=>(
+                <button key={id} onClick={()=>setPage(id)} style={{ padding:"8px 16px", background:page===id?(dark?"rgba(139,92,246,0.15)":"rgba(139,92,246,0.08)"):"none", border:"none", borderRadius:7, color:page===id?"#c4b5fd":T.textSub, fontFamily:"'Inter',sans-serif", fontSize:13, fontWeight:page===id?600:400, cursor:"pointer", transition:"all .18s" }}>
+                  {lbl}
+                </button>
+              ))
+            )}
           </div>
 
           {/* Auth + usage + theme */}
           <div style={{ display:"flex", alignItems:"center", gap:8 }} className="no-print">
             {user ? (
               <>
-                <div style={{ fontSize:10, color:T.textMut, fontFamily:"'Fira Code',monospace", textAlign:"right", lineHeight:1.5 }}>
+                <div style={{ fontSize:10, color:T.textMut, fontFamily:"'JetBrains Mono',monospace", textAlign:"right", lineHeight:1.5 }}>
                   <div style={{ color:usage.tier==="free"?T.amber:T.green }}>{usage.tier.toUpperCase()}</div>
                   <div>{usage.run_count}{usage.tier==="free"?"/3":""} runs</div>
                 </div>
-                <button onClick={async()=>{ await supabase.auth.signOut(); }} style={{ padding:"7px 12px", background:"none", border:"1px solid "+T.border, borderRadius:8, cursor:"pointer", color:T.textSub, fontFamily:"'DM Sans',sans-serif", fontSize:12 }}>
+                <button onClick={async()=>{ await supabase.auth.signOut(); }} style={{ padding:"7px 12px", background:"none", border:"1px solid "+T.border, borderRadius:8, cursor:"pointer", color:T.textSub, fontFamily:"'Inter',sans-serif", fontSize:12 }}>
                   Sign out
                 </button>
               </>
             ) : (
-              <button onClick={()=>setAuthOpen(true)} style={{ padding:"7px 16px", background:"linear-gradient(135deg,#7c3aed,#0891b2)", border:"none", borderRadius:8, cursor:"pointer", color:"#fff", fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:600 }}>
+              <button onClick={()=>setAuthOpen(true)} style={{ padding:"7px 16px", background:"linear-gradient(135deg,#7c3aed,#0891b2)", border:"none", borderRadius:8, cursor:"pointer", color:"#fff", fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:600 }}>
                 Sign in
               </button>
             )}
-            <button onClick={()=>setDark(!dark)} style={{ display:"flex", alignItems:"center", gap:7, padding:"7px 14px", background:T.bgCard, border:"1px solid "+T.border, borderRadius:8, cursor:"pointer", color:T.textSub, fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:500, transition:"all .18s" }}>
+            <button onClick={()=>setDark(!dark)} style={{ display:"flex", alignItems:"center", gap:7, padding:"7px 14px", background:T.bgCard, border:"1px solid "+T.border, borderRadius:8, cursor:"pointer", color:T.textSub, fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:500, transition:"all .18s" }}>
               {dark?"☀ Light":"🌙 Dark"}
             </button>
           </div>
@@ -2436,7 +2562,7 @@ export default function App() {
               <div style={{ height:"100%", width:pct+"%", background:"linear-gradient(90deg,#7c3aed,#0891b2)", borderRadius:2, transition:"width 0.6s ease" }} />
             </div>
             {Object.keys(stageErr).length > 0 && (
-              <div style={{ marginTop:5, fontSize:10, color:T.amber, fontFamily:"'Fira Code',monospace" }}>
+              <div style={{ marginTop:5, fontSize:10, color:T.amber, fontFamily:"'JetBrains Mono',monospace" }}>
                 ⚠ {Object.keys(stageErr).length} stage error(s) — continuing with partial results
               </div>
             )}
@@ -2511,10 +2637,10 @@ export default function App() {
               <div style={{ fontSize:11, color:T.textSub, lineHeight:1.7 }}>No Anthropic API key needed · Tythos covers grading · 3 free runs/month</div>
             </div>
             <div style={{ display:"flex", gap:8, flexShrink:0 }}>
-              <button onClick={()=>setAuthOpen(true)} style={{ padding:"9px 20px", background:"linear-gradient(135deg,#7c3aed,#0891b2)", border:"none", borderRadius:8, color:"#fff", fontFamily:"'DM Sans',sans-serif", fontSize:13, fontWeight:600, cursor:"pointer" }}>
+              <button onClick={()=>setAuthOpen(true)} style={{ padding:"9px 20px", background:"linear-gradient(135deg,#7c3aed,#0891b2)", border:"none", borderRadius:8, color:"#fff", fontFamily:"'Inter',sans-serif", fontSize:13, fontWeight:600, cursor:"pointer" }}>
                 Sign up free
               </button>
-              <button onClick={()=>setAuthOpen(true)} style={{ padding:"9px 16px", background:"none", border:"1px solid "+T.border, borderRadius:8, color:T.textSub, fontFamily:"'DM Sans',sans-serif", fontSize:12, cursor:"pointer" }}>
+              <button onClick={()=>setAuthOpen(true)} style={{ padding:"9px 16px", background:"none", border:"1px solid "+T.border, borderRadius:8, color:T.textSub, fontFamily:"'Inter',sans-serif", fontSize:12, cursor:"pointer" }}>
                 Sign in
               </button>
             </div>
@@ -2529,7 +2655,7 @@ export default function App() {
                 <input
                   value={url} onChange={handleUrlChange} disabled={status==="running"}
                   placeholder="https://api.openai.com/v1/chat/completions"
-                  style={{ width:"100%", padding:"13px 16px 13px 44px", background:T.bgCard, border:"1px solid "+(urlErr?T.red:url&&!urlErr?T.accentFg:T.border), borderRadius:10, color:T.text, fontFamily:"'Fira Code',monospace", fontSize:13, transition:"all .2s" }}
+                  style={{ width:"100%", padding:"13px 16px 13px 44px", background:T.bgCard, border:"1px solid "+(urlErr?T.red:url&&!urlErr?T.accentFg:T.border), borderRadius:10, color:T.text, fontFamily:"'JetBrains Mono',monospace", fontSize:13, transition:"all .2s" }}
                 />
                 <span style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", fontSize:16, opacity:.5 }}>🔗</span>
               </div>
@@ -2541,7 +2667,7 @@ export default function App() {
                   onChange={e=>{ setTargetKey(e.target.value); localStorage.setItem("ats_target_key",e.target.value); }}
                   disabled={status==="running"}
                   placeholder="Target API key (sk-...)"
-                  style={{ width:"100%", padding:"13px 36px 13px 14px", background:T.bgCard, border:"1px solid "+(targetKey?T.cyan:T.border), borderRadius:10, color:T.text, fontFamily:"'Fira Code',monospace", fontSize:12, transition:"all .2s" }}
+                  style={{ width:"100%", padding:"13px 36px 13px 14px", background:T.bgCard, border:"1px solid "+(targetKey?T.cyan:T.border), borderRadius:10, color:T.text, fontFamily:"'JetBrains Mono',monospace", fontSize:12, transition:"all .2s" }}
                 />
                 <button onClick={()=>setShowTargetKey(v=>!v)} style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:T.textMut, fontSize:11 }}>
                   {showTargetKey?"Hide":"Show"}
@@ -2553,7 +2679,7 @@ export default function App() {
                 onChange={e=>{ setTargetModel(e.target.value); localStorage.setItem("ats_target_model",e.target.value); }}
                 disabled={status==="running"}
                 placeholder="gpt-4o"
-                style={{ flex:"0 1 120px", padding:"13px 14px", background:T.bgCard, border:"1px solid "+(targetModel?T.cyan:T.border), borderRadius:10, color:T.text, fontFamily:"'Fira Code',monospace", fontSize:12, transition:"all .2s" }}
+                style={{ flex:"0 1 120px", padding:"13px 14px", background:T.bgCard, border:"1px solid "+(targetModel?T.cyan:T.border), borderRadius:10, color:T.text, fontFamily:"'JetBrains Mono',monospace", fontSize:12, transition:"all .2s" }}
               />
             </div>
             {!targetKey && url && <div style={{ fontSize:10, color:T.amber, marginBottom:6 }}>⚠ No target API key — requests will be sent without Authorization. Add a key if your endpoint requires one.</div>}
@@ -2562,31 +2688,31 @@ export default function App() {
                 <>
                   {!user ? (
                     <button onClick={()=>setAuthOpen(true)}
-                      style={{ padding:"13px 24px", background:"linear-gradient(135deg,#7c3aed,#0891b2)", border:"none", borderRadius:10, color:"#ffffff", fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap" }}>
+                      style={{ padding:"13px 24px", background:"linear-gradient(135deg,#7c3aed,#0891b2)", border:"none", borderRadius:10, color:"#ffffff", fontFamily:"'Inter',sans-serif", fontSize:14, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap" }}>
                       Sign in to Run Free
                     </button>
                   ) : usage.tier==="free" && usage.run_count >= 3 ? (
                     <>
                       <button onClick={()=>window.location.href="mailto:upgrade@tythos.ai"}
-                        style={{ padding:"13px 24px", background:"linear-gradient(135deg,#d4a017,#f97316)", border:"none", borderRadius:10, color:"#ffffff", fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap" }}>
+                        style={{ padding:"13px 24px", background:"linear-gradient(135deg,#d4a017,#f97316)", border:"none", borderRadius:10, color:"#ffffff", fontFamily:"'Inter',sans-serif", fontSize:14, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap" }}>
                         Upgrade to Pro — $49/mo
                       </button>
                       <span style={{ fontSize:11, color:T.amber }}>Free limit reached (3/3 runs this month)</span>
                     </>
                   ) : (
                     <button onClick={runSuite} disabled={!!urlErr || !url.trim()}
-                      style={{ padding:"13px 24px", background:"linear-gradient(135deg,#7c3aed,#0891b2)", border:"none", borderRadius:10, color:"#ffffff", fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:600, cursor:(urlErr||!url.trim())?"not-allowed":"pointer", transition:"all .2s", opacity:(urlErr||!url.trim())?0.4:1, whiteSpace:"nowrap" }}>
+                      style={{ padding:"13px 24px", background:"linear-gradient(135deg,#7c3aed,#0891b2)", border:"none", borderRadius:10, color:"#ffffff", fontFamily:"'Inter',sans-serif", fontSize:14, fontWeight:600, cursor:(urlErr||!url.trim())?"not-allowed":"pointer", transition:"all .2s", opacity:(urlErr||!url.trim())?0.4:1, whiteSpace:"nowrap" }}>
                       Launch Full Suite
                     </button>
                   )}
                   {status==="done" && (
-                    <button onClick={doReset} style={{ padding:"13px 18px", background:"none", border:"1px solid "+T.border, borderRadius:10, color:T.textSub, fontFamily:"'DM Sans',sans-serif", fontSize:13, fontWeight:500, cursor:"pointer" }}>
+                    <button onClick={doReset} style={{ padding:"13px 18px", background:"none", border:"1px solid "+T.border, borderRadius:10, color:T.textSub, fontFamily:"'Inter',sans-serif", fontSize:13, fontWeight:500, cursor:"pointer" }}>
                       Reset
                     </button>
                   )}
                 </>
               ) : (
-                <button onClick={doAbort} style={{ padding:"13px 20px", background:"none", border:"1px solid "+T.red, borderRadius:10, color:T.red, fontFamily:"'DM Sans',sans-serif", fontSize:13, fontWeight:600, cursor:"pointer", animation:"pulse 2s ease-in-out infinite", whiteSpace:"nowrap" }}>
+                <button onClick={doAbort} style={{ padding:"13px 20px", background:"none", border:"1px solid "+T.red, borderRadius:10, color:T.red, fontFamily:"'Inter',sans-serif", fontSize:13, fontWeight:600, cursor:"pointer", animation:"pulse 2s ease-in-out infinite", whiteSpace:"nowrap" }}>
                   Abort
                 </button>
               )}
@@ -2600,7 +2726,7 @@ export default function App() {
                 {showIntro?"Hide":"Show"} beginner guide
               </button>
             </span>
-            <button onClick={()=>setVendorMode(v=>!v)} style={{ background:vendorMode?(dark?"rgba(212,160,23,0.15)":"rgba(212,160,23,0.1)"):"none", border:"1px solid "+(vendorMode?"#d4a017":T.border), borderRadius:6, color:vendorMode?"#d4a017":T.textMut, cursor:"pointer", fontSize:10, fontWeight:600, padding:"3px 10px", letterSpacing:.5, fontFamily:"'Fira Code',monospace", transition:"all .2s" }}>
+            <button onClick={()=>setVendorMode(v=>!v)} style={{ background:vendorMode?(dark?"rgba(212,160,23,0.15)":"rgba(212,160,23,0.1)"):"none", border:"1px solid "+(vendorMode?"#d4a017":T.border), borderRadius:6, color:vendorMode?"#d4a017":T.textMut, cursor:"pointer", fontSize:10, fontWeight:600, padding:"3px 10px", letterSpacing:.5, fontFamily:"'JetBrains Mono',monospace", transition:"all .2s" }}>
               {vendorMode?"⚖ VENDOR ASSESSMENT ON":"⚖ Vendor Assessment Mode"}
             </button>
           </div>
@@ -2669,7 +2795,7 @@ export default function App() {
               <div style={{ overflowY:"auto", maxHeight:600 }}>
                 {PHASES.map(ph=>(
                   <div key={ph.id} style={{ marginBottom:6 }}>
-                    <div style={{ fontSize:9, fontFamily:"'Fira Code',monospace", letterSpacing:2, textTransform:"uppercase", color:ph.color, padding:"10px 10px 4px", opacity:.85 }}>{ph.label}</div>
+                    <div style={{ fontSize:9, fontFamily:"'JetBrains Mono',monospace", letterSpacing:2, textTransform:"uppercase", color:ph.color, padding:"10px 10px 4px", opacity:.85 }}>{ph.label}</div>
                     {ph.stages.map(sid=>{
                       const meta=STAGE_META[sid]; const r=res[sid]; const isAct=cur===sid; const done=!!r; const sc2=r?r.score:undefined;
                       return (
@@ -2729,12 +2855,12 @@ export default function App() {
                     </div>
                   )}
                   {logs.map((l,i)=>(
-                    <div key={i} style={{ color:T.LC[l.t]||T.textMut, lineHeight:1.65, marginBottom:1, fontFamily:"'Fira Code',monospace", fontSize:11 }}>
+                    <div key={i} style={{ color:T.LC[l.t]||T.textMut, lineHeight:1.65, marginBottom:1, fontFamily:"'JetBrains Mono',monospace", fontSize:11 }}>
                       <span style={{ color:T.textMut, marginRight:10, userSelect:"none", opacity:.5 }}>{l.ts}</span>
                       {l.msg}
                     </div>
                   ))}
-                  {status==="running"&&<span style={{ color:T.accentFg, animation:"pulse 1s ease-in-out infinite", fontFamily:"'Fira Code',monospace" }}>▋</span>}
+                  {status==="running"&&<span style={{ color:T.accentFg, animation:"pulse 1s ease-in-out infinite", fontFamily:"'JetBrains Mono',monospace" }}>▋</span>}
                 </div>
               </div>
             </div>
@@ -2756,7 +2882,7 @@ export default function App() {
                 <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:24 }}>
                   {PHASES.map(ph=>(
                     <button key={ph.id} onClick={()=>setSelPhase(ph.id)}
-                      style={{ padding:"8px 16px", borderRadius:8, border:"1px solid "+(selPhase===ph.id?ph.color+"60":T.border), background:selPhase===ph.id?ph.color+"14":"none", color:selPhase===ph.id?ph.color:T.textSub, fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:selPhase===ph.id?600:400, cursor:"pointer", transition:"all .18s", display:"flex", alignItems:"center", gap:8 }}>
+                      style={{ padding:"8px 16px", borderRadius:8, border:"1px solid "+(selPhase===ph.id?ph.color+"60":T.border), background:selPhase===ph.id?ph.color+"14":"none", color:selPhase===ph.id?ph.color:T.textSub, fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:selPhase===ph.id?600:400, cursor:"pointer", transition:"all .18s", display:"flex", alignItems:"center", gap:8 }}>
                       {ph.label}
                       {overall&&<span className="mono" style={{ fontSize:10, opacity:.7 }}>{overall.phases[ph.id]}</span>}
                     </button>
@@ -3228,7 +3354,7 @@ export default function App() {
                 {/* Report header */}
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:12, marginBottom:20, paddingBottom:20, borderBottom:"1px solid "+T.border }}>
                   <div>
-                    <div style={{ fontSize:11, fontFamily:"'Fira Code',monospace", letterSpacing:1.5, color:T.accentFg, marginBottom:6 }}>EXECUTIVE REPORT · AI TESTING SUITE v5.0</div>
+                    <div style={{ fontSize:11, fontFamily:"'JetBrains Mono',monospace", letterSpacing:1.5, color:T.accentFg, marginBottom:6 }}>EXECUTIVE REPORT · AI TESTING SUITE v5.0</div>
                     <div style={{ fontSize:14, fontWeight:600, color:T.text, marginBottom:4 }}>AI Safety & Quality Evaluation</div>
                     <div className="mono" style={{ fontSize:11, color:T.textMut }}>{url}</div>
                   </div>
@@ -3240,10 +3366,10 @@ export default function App() {
                     </div>
                   )}
                 </div>
-                <pre style={{ fontFamily:"'Fira Code',monospace", fontSize:12, lineHeight:1.9, color:T.textSub, whiteSpace:"pre-wrap", borderLeft:"3px solid "+T.accentFg+"40", paddingLeft:20 }}>{report}</pre>
+                <pre style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, lineHeight:1.9, color:T.textSub, whiteSpace:"pre-wrap", borderLeft:"3px solid "+T.accentFg+"40", paddingLeft:20 }}>{report}</pre>
                 {/* Export + share actions */}
                 <div style={{ marginTop:20, display:"flex", gap:10, flexWrap:"wrap", paddingTop:16, borderTop:"1px solid "+T.border }} className="no-print">
-                  <button onClick={()=>window.print()} style={{ padding:"10px 20px", background:"linear-gradient(135deg,#7c3aed,#0891b2)", border:"none", borderRadius:8, color:"#fff", fontFamily:"'DM Sans',sans-serif", fontSize:13, fontWeight:600, cursor:"pointer" }}>
+                  <button onClick={()=>window.print()} style={{ padding:"10px 20px", background:"linear-gradient(135deg,#7c3aed,#0891b2)", border:"none", borderRadius:8, color:"#fff", fontFamily:"'Inter',sans-serif", fontSize:13, fontWeight:600, cursor:"pointer" }}>
                     ⬇ Download PDF
                   </button>
                   {vendorMode&&overall&&(
@@ -3251,7 +3377,7 @@ export default function App() {
                       {ovScore>=85?"✅ PROCUREMENT: APPROVE":ovScore>=65?"⚠️ PROCUREMENT: EVALUATE FURTHER":"❌ PROCUREMENT: REJECT"}
                     </div>
                   )}
-                  <button onClick={()=>{navigator.clipboard.writeText(`Tythos AI Evaluation Report\nEndpoint: ${url}\nScore: ${ovScore}/100 · ${riskLabel(ovScore)}\nDate: ${new Date().toLocaleDateString()}`);toast("Report summary copied!","success",3000);}} style={{ padding:"10px 18px", background:"none", border:"1px solid "+T.border, borderRadius:8, color:T.textSub, fontFamily:"'DM Sans',sans-serif", fontSize:13, cursor:"pointer" }}>
+                  <button onClick={()=>{navigator.clipboard.writeText(`Tythos AI Evaluation Report\nEndpoint: ${url}\nScore: ${ovScore}/100 · ${riskLabel(ovScore)}\nDate: ${new Date().toLocaleDateString()}`);toast("Report summary copied!","success",3000);}} style={{ padding:"10px 18px", background:"none", border:"1px solid "+T.border, borderRadius:8, color:T.textSub, fontFamily:"'Inter',sans-serif", fontSize:13, cursor:"pointer" }}>
                     🔗 Copy Summary
                   </button>
                 </div>
@@ -3285,7 +3411,7 @@ export default function App() {
                     </div>
                     <div style={{ display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
                       {run.overall_score!=null&&<span className="mono" style={{ fontSize:18, fontWeight:700, color:scoreColor(run.overall_score,dark) }}>{run.overall_score}</span>}
-                      <span style={{ fontSize:10, padding:"3px 8px", borderRadius:4, background:run.status==="complete"?(dark?"rgba(74,222,128,0.1)":"rgba(22,163,74,0.1)"):T.bgSurf, color:run.status==="complete"?T.green:T.textMut, fontFamily:"'Fira Code',monospace" }}>{run.status}</span>
+                      <span style={{ fontSize:10, padding:"3px 8px", borderRadius:4, background:run.status==="complete"?(dark?"rgba(74,222,128,0.1)":"rgba(22,163,74,0.1)"):T.bgSurf, color:run.status==="complete"?T.green:T.textMut, fontFamily:"'JetBrains Mono',monospace" }}>{run.status}</span>
                       {run.share_id&&<button onClick={()=>{navigator.clipboard.writeText(window.location.origin+"?share="+run.share_id);toast("Share link copied!","success",3000);}} style={{ background:"none", border:"none", color:T.textMut, cursor:"pointer", fontSize:11 }}>🔗</button>}
                     </div>
                   </div>
@@ -3338,7 +3464,7 @@ export default function App() {
                       ["Deploy Gate",     ovScore>=85?"✅ Production Ready":ovScore>=65?"⚠️ Conditional Deployment":"❌ Do Not Deploy"],
                     ].map(([k,v])=>(
                       <div key={k} style={{ display:"flex", justifyContent:"space-between", padding:"9px 0", borderBottom:"1px solid "+T.border, fontSize:12 }}>
-                        <span style={{ color:T.textMut, fontFamily:"'Fira Code',monospace", fontSize:11 }}>{k}</span>
+                        <span style={{ color:T.textMut, fontFamily:"'JetBrains Mono',monospace", fontSize:11 }}>{k}</span>
                         <span style={{ color:T.text, fontWeight:500, textAlign:"right", maxWidth:320 }}>{v}</span>
                       </div>
                     ))}
@@ -3366,10 +3492,10 @@ export default function App() {
                   )}
                   {/* Actions */}
                   <div style={{ display:"flex", gap:12, justifyContent:"center" }} className="no-print">
-                    <button onClick={()=>window.print()} style={{ padding:"12px 28px", background:certColor, border:"none", borderRadius:8, color:ovScore>=55?"#000":"#fff", fontFamily:"'DM Sans',sans-serif", fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                    <button onClick={()=>window.print()} style={{ padding:"12px 28px", background:certColor, border:"none", borderRadius:8, color:ovScore>=55?"#000":"#fff", fontFamily:"'Inter',sans-serif", fontSize:13, fontWeight:700, cursor:"pointer" }}>
                       ⬇ Download PDF
                     </button>
-                    <button onClick={()=>{navigator.clipboard.writeText(`${url} — Tythos ${certLevel||"Not Certified"} · ${ovScore}/100 · ${certDate}`);toast("Share text copied!","success",3000);}} style={{ padding:"12px 22px", background:"none", border:"1px solid "+T.border, borderRadius:8, color:T.textSub, fontFamily:"'DM Sans',sans-serif", fontSize:13, cursor:"pointer" }}>
+                    <button onClick={()=>{navigator.clipboard.writeText(`${url} — Tythos ${certLevel||"Not Certified"} · ${ovScore}/100 · ${certDate}`);toast("Share text copied!","success",3000);}} style={{ padding:"12px 22px", background:"none", border:"1px solid "+T.border, borderRadius:8, color:T.textSub, fontFamily:"'Inter',sans-serif", fontSize:13, cursor:"pointer" }}>
                       🔗 Copy Share Text
                     </button>
                   </div>
@@ -3391,7 +3517,7 @@ export default function App() {
       </div>
 
       </>) : (
-        <LandingPage T={T} dark={dark} setAuthOpen={setAuthOpen} />
+        <LandingPage T={T} dark={dark} setAuthOpen={setAuthOpen} page={page} setPage={setPage} />
       )}
     </div>
   );
