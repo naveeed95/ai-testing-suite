@@ -475,6 +475,125 @@ function Toasts({ toasts, remove }) {
 }
 
 // ══════════════════════════════════════════════════════════
+// LANDING PAGE — shown to unauthenticated visitors
+// ══════════════════════════════════════════════════════════
+function LandingPage({ T, dark, setAuthOpen }) {
+  const stars = [[8,22,"1.5px","4s","0s"],[22,55,"1px","3s","1s"],[45,18,"2px","5s","0.5s"],[68,65,"1px","3.5s","2s"],[15,80,"1.5px","4.5s","1.5s"],[80,35,"1px","3s","0.8s"],[55,90,"2px","4s","2.5s"],[92,12,"1px","3.5s","0.3s"],[35,45,"1.5px","5s","1.2s"],[75,72,"1px","4s","1.8s"],[5,38,"1px","3.5s","2.2s"],[60,88,"2px","4.5s","0.7s"],[25,10,"1px","3s","0.5s"],[88,48,"1.5px","4s","1.3s"],[50,30,"1px","5s","2s"]];
+  return (
+    <div style={{ position:"relative", overflow:"hidden" }}>
+      {dark && stars.map(([l,t,sz,d,dl],i) => (
+        <div key={i} className="star" style={{ left:l+"%", top:t+"%", width:sz, height:sz, "--d":d, "--dl":dl }} />
+      ))}
+
+      {/* Hero */}
+      <div style={{ padding:"88px 24px 72px", textAlign:"center", position:"relative" }}>
+        <div style={{ position:"absolute", top:0, left:0, right:0, height:2, background:"linear-gradient(90deg,transparent,#7c3aed,#00d4ff,transparent)", animation:"sweepLine 4s linear infinite" }} />
+        <div style={{ maxWidth:720, margin:"0 auto" }}>
+          <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:dark?"rgba(124,58,237,0.12)":"rgba(124,58,237,0.08)", border:"1px solid "+(dark?"rgba(124,58,237,0.3)":"rgba(124,58,237,0.2)"), borderRadius:20, padding:"5px 14px", marginBottom:24 }}>
+            <div style={{ width:6, height:6, borderRadius:"50%", background:"#7c3aed", animation:"pulse 2s ease-in-out infinite" }} />
+            <span className="mono" style={{ fontSize:10, letterSpacing:2, color:T.accentFg }}>33 STAGES · 7 PHASES · AI-GRADED</span>
+          </div>
+          <h1 className="syne" style={{ fontSize:"clamp(36px,6vw,64px)", fontWeight:800, letterSpacing:-2, color:T.text, lineHeight:1.02, marginBottom:20 }}>
+            The Oracle of<br />
+            <span style={{ background:"linear-gradient(135deg,#b794f4,#00d4ff,#d4a017)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>AI Intelligence</span>
+          </h1>
+          <p style={{ fontSize:16, color:T.textSub, lineHeight:1.75, maxWidth:520, margin:"0 auto 36px", fontWeight:400 }}>
+            Paste any AI endpoint URL. Run 33 automated test stages across 7 phases. Get a scored safety report with actionable findings — no expertise required.
+          </p>
+          <div style={{ display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap", marginBottom:52 }}>
+            <button onClick={()=>setAuthOpen(true)} style={{ padding:"15px 36px", background:"linear-gradient(135deg,#7c3aed,#0891b2)", border:"none", borderRadius:10, color:"#fff", fontFamily:"'DM Sans',sans-serif", fontSize:15, fontWeight:700, cursor:"pointer", boxShadow:"0 0 40px rgba(124,58,237,0.45)" }}>
+              Create free account
+            </button>
+            <button onClick={()=>setAuthOpen(true)} style={{ padding:"15px 26px", background:"none", border:"1px solid "+T.border, borderRadius:10, color:T.textSub, fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:500, cursor:"pointer" }}>
+              Sign in
+            </button>
+          </div>
+          <div style={{ display:"flex", gap:36, justifyContent:"center", flexWrap:"wrap" }}>
+            {[["3","Free runs/month"],["33","Test stages"],["7","Eval phases"],["0","API keys needed"]].map(([n,l])=>(
+              <div key={l} style={{ textAlign:"center" }}>
+                <div className="syne" style={{ fontSize:30, fontWeight:800, color:T.accentFg, lineHeight:1 }}>{n}</div>
+                <div style={{ fontSize:11, color:T.textMut, marginTop:5 }}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Phase grid */}
+      <div style={{ maxWidth:1200, margin:"0 auto", padding:"0 24px 72px" }}>
+        <div style={{ textAlign:"center", marginBottom:36 }}>
+          <div className="mono" style={{ fontSize:10, letterSpacing:2, color:T.textMut, textTransform:"uppercase", marginBottom:10 }}>What gets tested</div>
+          <h2 className="syne" style={{ fontSize:"clamp(22px,3vw,34px)", fontWeight:800, color:T.text, letterSpacing:-0.5, marginBottom:10 }}>Everything covered. Nothing assumed.</h2>
+          <p style={{ fontSize:13, color:T.textSub, maxWidth:480, margin:"0 auto" }}>33 automated evaluation stages probe every known AI failure mode — from hallucination to adversarial attacks.</p>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))", gap:14 }}>
+          {PHASES.map(ph=>(
+            <div key={ph.id} style={{ background:T.bgCard, border:"1px solid "+T.border, borderRadius:12, padding:"20px 22px", position:"relative", overflow:"hidden" }}>
+              <div style={{ position:"absolute", top:0, left:0, right:0, height:2, background:ph.color }} />
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+                <span style={{ fontSize:11, fontWeight:700, color:ph.color, letterSpacing:0.5 }}>{ph.label.toUpperCase()}</span>
+                <span className="mono" style={{ fontSize:10, color:ph.color+"80" }}>{ph.stages.length} stages</span>
+              </div>
+              <div style={{ fontSize:12, color:T.textSub, lineHeight:1.7, marginBottom:12 }}>{ph.desc}</div>
+              <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
+                {ph.stages.map(s=><span key={s} style={{ fontSize:15 }}>{STAGE_META[s]?.icon}</span>)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Pricing */}
+      <div style={{ maxWidth:900, margin:"0 auto", padding:"0 24px 88px" }}>
+        <div style={{ textAlign:"center", marginBottom:36 }}>
+          <div className="mono" style={{ fontSize:10, letterSpacing:2, color:T.textMut, textTransform:"uppercase", marginBottom:10 }}>Pricing</div>
+          <h2 className="syne" style={{ fontSize:"clamp(22px,3vw,34px)", fontWeight:800, color:T.text, letterSpacing:-0.5 }}>Start free. Scale when ready.</h2>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))", gap:16 }}>
+          {[
+            { tier:"Free", price:"$0", sub:"3 runs / month", features:["33 evaluation stages","AI-graded report","PDF export","Certification badge"], cta:"Get started free", hi:false, color:"#7c3aed" },
+            { tier:"Pro", price:"$49", sub:"per month", features:["Unlimited runs","Full run history","Priority grading","Share reports"], cta:"Upgrade to Pro", hi:true, color:"#00d4ff" },
+            { tier:"Certified Report", price:"$299", sub:"one-time", features:["Co-branded PDF report","Shareable badge","Official certification","~$0.90 API cost"], cta:"Get certified", hi:false, color:"#d4a017" },
+          ].map(plan=>(
+            <div key={plan.tier} style={{ background:plan.hi?(dark?"rgba(0,212,255,0.05)":"rgba(0,212,255,0.04)"):T.bgCard, border:"1px solid "+(plan.hi?plan.color+"45":T.border), borderRadius:14, padding:"28px 22px", position:"relative" }}>
+              {plan.hi&&<div style={{ position:"absolute", top:-1, left:"50%", transform:"translateX(-50%)", background:"linear-gradient(90deg,#7c3aed,#0891b2)", borderRadius:"0 0 8px 8px", padding:"3px 14px", fontSize:9, fontWeight:700, color:"#fff", letterSpacing:1.5 }}>POPULAR</div>}
+              <div style={{ marginBottom:18 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:plan.color, letterSpacing:0.5, marginBottom:8 }}>{plan.tier.toUpperCase()}</div>
+                <div style={{ display:"flex", alignItems:"baseline", gap:4 }}>
+                  <span className="syne" style={{ fontSize:34, fontWeight:800, color:T.text, lineHeight:1 }}>{plan.price}</span>
+                  <span style={{ fontSize:11, color:T.textMut }}>{plan.sub}</span>
+                </div>
+              </div>
+              <div style={{ marginBottom:22 }}>
+                {plan.features.map(f=>(
+                  <div key={f} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8, fontSize:12, color:T.textSub }}>
+                    <span style={{ color:plan.color, fontWeight:700, flexShrink:0 }}>&#10003;</span>{f}
+                  </div>
+                ))}
+              </div>
+              <button onClick={()=>setAuthOpen(true)} style={{ width:"100%", padding:"12px", background:plan.hi?"linear-gradient(135deg,#7c3aed,#0891b2)":"none", border:"1px solid "+(plan.hi?"transparent":T.border), borderRadius:8, color:plan.hi?"#fff":T.textSub, fontFamily:"'DM Sans',sans-serif", fontSize:13, fontWeight:600, cursor:"pointer" }}>
+                {plan.cta}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom CTA */}
+      <div style={{ textAlign:"center", padding:"0 24px 80px" }}>
+        <div style={{ maxWidth:480, margin:"0 auto" }}>
+          <h3 className="syne" style={{ fontSize:26, fontWeight:800, color:T.text, letterSpacing:-0.5, marginBottom:12 }}>Ready to evaluate your AI?</h3>
+          <p style={{ fontSize:13, color:T.textSub, marginBottom:28, lineHeight:1.75 }}>Join teams using Tythos to ship AI they can trust. Free account — no credit card required.</p>
+          <button onClick={()=>setAuthOpen(true)} style={{ padding:"15px 40px", background:"linear-gradient(135deg,#7c3aed,#0891b2)", border:"none", borderRadius:10, color:"#fff", fontFamily:"'DM Sans',sans-serif", fontSize:15, fontWeight:700, cursor:"pointer", boxShadow:"0 0 48px rgba(124,58,237,0.4)" }}>
+            Start your free evaluation →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
 // MAIN APP
 // ══════════════════════════════════════════════════════════
 export default function App() {
@@ -2040,6 +2159,8 @@ export default function App() {
         </div>
       </div>
 
+      {user ? (<>
+
       {/* ══ PROGRESS BAR ════════════════════════════════════ */}
       {status === "running" && (
         <div style={{ background:T.bgSurf, borderBottom:"1px solid "+T.border, padding:"10px 24px" }}>
@@ -3007,6 +3128,10 @@ export default function App() {
           <div style={{ fontSize:10, color:T.textMut, marginTop:4 }}>Scalable — add new phases in PHASES array · add new stages in STAGE_META</div>
         </div>
       </div>
+
+      </>) : (
+        <LandingPage T={T} dark={dark} setAuthOpen={setAuthOpen} />
+      )}
     </div>
   );
 }
