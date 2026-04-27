@@ -2,12 +2,14 @@ import { useState } from "react";
 import { supabase } from "../lib/supabase";
 
 export default function Auth({ dark, onClose }) {
-  const [mode, setMode]         = useState("signin");
-  const [email, setEmail]       = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState("");
-  const [success, setSuccess]   = useState("");
+  const [mode, setMode]                 = useState("signin");
+  const [email, setEmail]               = useState("");
+  const [password, setPassword]         = useState("");
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState("");
+  const [success, setSuccess]           = useState("");
+  const [needsConfirm, setNeedsConfirm] = useState(false);
+  const [resending, setResending]       = useState(false);
 
   const T = {
     bg:    dark ? "#0b0b1c" : "#ffffff",
@@ -22,22 +24,53 @@ export default function Auth({ dark, onClose }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError(""); setSuccess(""); setLoading(true);
+    setError(""); setSuccess(""); setNeedsConfirm(false); setLoading(true);
     try {
       if (mode === "signup") {
-        const { error: err } = await supabase.auth.signUp({ email, password });
+        const { data, error: err } = await supabase.auth.signUp({ email, password });
         if (err) throw err;
-        setSuccess("Account created! Check your email to confirm, then sign in.");
-        setMode("signin");
+        // If Supabase returns a session immediately, email confirm is disabled — sign in now
+        if (data?.session) {
+          onClose();
+        } else {
+          setSuccess("Account created! Check your email for a confirmation link, then sign in.");
+          setNeedsConfirm(true);
+          setMode("signin");
+        }
       } else {
         const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-        if (err) throw err;
+        if (err) {
+          const msg = err.message || "";
+          if (msg.toLowerCase().includes("email not confirmed") || msg.toLowerCase().includes("not confirmed")) {
+            setNeedsConfirm(true);
+            setError("Email not confirmed yet. Check your inbox (and spam folder) for the confirmation link.");
+          } else if (msg.toLowerCase().includes("invalid login") || msg.toLowerCase().includes("invalid credentials")) {
+            setError("Incorrect email or password. Please try again.");
+          } else {
+            throw err;
+          }
+          return;
+        }
         onClose();
       }
     } catch (err) {
-      setError(err.message || "Something went wrong.");
+      setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleResend() {
+    if (!email) { setError("Enter your email address above first."); return; }
+    setResending(true); setError(""); setSuccess("");
+    try {
+      const { error: err } = await supabase.auth.resend({ type: "signup", email });
+      if (err) throw err;
+      setSuccess("Confirmation email resent! Check your inbox and spam folder.");
+    } catch (err) {
+      setError("Could not resend: " + (err.message || "unknown error"));
+    } finally {
+      setResending(false);
     }
   }
 
@@ -82,8 +115,16 @@ export default function Auth({ dark, onClose }) {
             <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password" required autoComplete={mode==="signup"?"new-password":"current-password"} style={inp} />
           </div>
 
-          {error   && <div style={{ fontSize:12, color:T.red,   marginBottom:12, padding:"8px 12px", background:T.red+"22",   borderRadius:6 }}>{error}</div>}
-          {success && <div style={{ fontSize:12, color:T.green, marginBottom:12, padding:"8px 12px", background:T.green+"22", borderRadius:6 }}>{success}</div>}
+          {error   && <div style={{ fontSize:12, color:T.red,   marginBottom:8, padding:"8px 12px", background:T.red+"22",   borderRadius:6 }}>{error}</div>}
+          {success && <div style={{ fontSize:12, color:T.green, marginBottom:8, padding:"8px 12px", background:T.green+"22", borderRadius:6 }}>{success}</div>}
+          {needsConfirm && (
+            <div style={{ marginBottom:12, padding:"10px 12px", background:dark?"rgba(245,158,11,0.1)":"rgba(245,158,11,0.08)", border:"1px solid rgba(245,158,11,0.35)", borderRadius:6 }}>
+              <div style={{ fontSize:11, color:"#f59e0b", marginBottom:6 }}>Didn't receive the email? Check spam, or resend below.</div>
+              <button type="button" onClick={handleResend} disabled={resending||!email} style={{ fontSize:11, color:"#f59e0b", background:"none", border:"1px solid rgba(245,158,11,0.4)", borderRadius:5, padding:"4px 10px", cursor:"pointer", fontWeight:600, opacity:(resending||!email)?0.5:1 }}>
+                {resending?"Resending…":"Resend confirmation email"}
+              </button>
+            </div>
+          )}
 
           <button type="submit" disabled={loading||!email||!password} style={{ width:"100%", padding:"12px", background:"linear-gradient(135deg,#7c3aed,#0891b2)", border:"none", borderRadius:9, color:"#fff", fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:600, cursor:"pointer", opacity:(loading||!email||!password)?0.5:1 }}>
             {loading ? "…" : mode==="signin" ? "Sign in" : "Create account"}
